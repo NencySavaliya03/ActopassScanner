@@ -1,6 +1,5 @@
 import { Animated, Appearance, Image, ImageBackground, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import GIF from 'react-native-gif';
 
 export default function Success({ navigation, route }) {
   const { messageType } = route.params;
@@ -15,9 +14,10 @@ export default function Success({ navigation, route }) {
       subscription.remove();
     };
   }, []);
+  console.log(messageType);
 
   let imageSource;
-  if (messageType === 'success') {
+  if (messageType === 'Success') {
     imageSource = require('../images/success.png');
   } else if (messageType === 'warning') {
     imageSource = require('../images/warning.png');

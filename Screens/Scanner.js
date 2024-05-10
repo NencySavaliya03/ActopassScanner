@@ -1,20 +1,25 @@
-import React, { useState, useEffect } from "react";
-import { Text, View, StyleSheet, Button, TouchableOpacity, Linking, Appearance } from "react-native";
+import { Text, View, StyleSheet, Button, TouchableOpacity, Linking, Appearance, SafeAreaView, Animated } from "react-native";
+import React, { useEffect, useRef, useState } from 'react'
 import { Camera, CameraType } from 'expo-camera';
+import * as Font from "expo-font";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function Scanner() {
+export default function Scanner({ navigation, globalDomain }) {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [scanData, setScanData] = useState(null);
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
+  const [warningMessage, setWarningMessage] = useState('');
+  const cameraRef = useRef(null);
 
-  useEffect(() => {
-    const getCameraPermissions = async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === "granted");
-    };
-    getCameraPermissions();
-  }, []);
+  async function loadFonts() {
+    await Font.loadAsync({
+      "Montserrat-SemiBold": require("../assets/fonts/Montserrat-SemiBold.ttf"),
+      "Montserrat-Medium": require("../assets/fonts/Montserrat-Medium.ttf"),
+    });
+  }
+  loadFonts();
 
   useEffect(() => {
     const handleChange = (preferences) => {
@@ -26,24 +31,71 @@ export default function Scanner() {
     };
   }, []);
 
-  const handleBarCodeScanned = ({ type, data }) => {
+  useEffect(() => {
+    const unsubscribeFocus = navigation.addListener('focus', handleFocusCamera);
+    const unsubscribeBlur = navigation.addListener('blur', handleBlurCamera);
+  
+    return () => {
+      unsubscribeFocus();
+      unsubscribeBlur();
+    };
+  }, [navigation]);
+  
+  useEffect(() => {
+    const getCameraPermissions = async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+    }; 
+    getCameraPermissions();
+  }, []);
+
+  const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     setScanData(data);
+    const storedDataJSON = await AsyncStorage.getItem('userData');
+    const storedData = JSON.parse(storedDataJSON);
+    try {
+      const response = await fetch('https://actopassapi.actoscript.com/api/SacnneTicket', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + storedData.AuthorizationKey,
+        },
+        body: JSON.stringify({
+          QrCode: data,
+          ScannerLoginId: storedData.ScannerLoginId,
+        }),
+      });
+      if (!response.ok) {
+        if (response.status === 404) {
+          const responseBody = await response.json();
+          console.log('ResponseMessage:', responseBody.ResponseMessage);
+          setWarningMessage(responseBody.ResponseMessage);
+        } 
+      } else {
+        const scannedData = await response.json();
+        await AsyncStorage.setItem('scannedData', JSON.stringify(scannedData));
+        navigation.navigate('Home');
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+    }
   };
 
-  // const handleOpenLink = (url) => {
-  //   Linking.canOpenURL(url).then(supported => {
-  //     if (supported) {
-  //       Linking.openURL(url);
-  //     } else {
-  //       alert("Don't know how to open this URL: " + url);
-  //     }
-  //   });
-  // };
-
-  const handleReset = () => {
-    setScanned(false);
-    setScanData(null);
+  const handleFocusCamera = () => {
+    if (cameraRef.current) {
+      cameraRef.current.resumePreview();
+      setScanned(false);
+      setScanData(null);
+      setWarningMessage(''); 
+    }
+  };
+  
+  const handleBlurCamera = () => {
+    if (cameraRef.current) {
+      cameraRef.current.pausePreview();
+    }
   };
 
   if (hasPermission === null) {
@@ -54,59 +106,82 @@ export default function Scanner() {
   }
 
   return (
-    <View style={styles(colorScheme).container}>
-      <Text style={styles(colorScheme).scannedText}>{scanned && scanData}</Text>
-      <View style={styles(colorScheme).cameraContainer}>
-        <Camera
-          type={CameraType.back}
-          onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          style={styles(colorScheme).camera}
-        />
-      </View>
-      {scanned && (
-        <TouchableOpacity style={styles(colorScheme).submitButton}>
-          <Text style={styles(colorScheme).submitText} onPress={handleReset}>Scan Again</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+    <SafeAreaView style={styles(colorScheme).container}>
+        <View style={styles(colorScheme).messageContainer}>
+          {warningMessage !== '' && (
+            <View style={styles(colorScheme).warningMessages}>
+              <Text numberOfLines={3} style={styles(colorScheme).warningText}>{warningMessage}</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles(colorScheme).scannerCamera}>
+          <Camera
+            type={Camera.Constants.Type.back}
+            onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+            ref={cameraRef}
+            style={{ flex: 1 }}
+          />
+        </View>
+        <View style={{flex: 1}}>
+          {scanned && 
+            <TouchableOpacity style={styles(colorScheme).submitButton} onPress={handleFocusCamera} >
+              <Text style={styles(colorScheme).submitText}>Scan Again</Text>
+            </TouchableOpacity>
+          }
+        </View>
+    </SafeAreaView>
+  )
 }
 
 const styles = (colorScheme) => StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
     backgroundColor: colorScheme === 'dark' ? '#000000' : '#FFFFFF', 
   },
-  cameraContainer: {
-    height: 300,
-    width: 300,
-    overflow: 'hidden',
-    borderRadius: 20, 
-  },
-  camera: {
+  messageContainer: {
     flex: 1,
+    paddingTop: 100
+  },
+  warningMessages: {  
+    flex: .5,
+    width: wp('80%'),
+    padding: 10,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorScheme === 'dark' ? '#333333' : '#FFFFFF', 
+    borderRadius: 20,
+    shadowColor: colorScheme === 'dark' ? '#FFFFFF' : '#000000', 
+    elevation: 7
+  },  
+  warningText: {
+    color:  colorScheme === 'dark' ? '#FFFFFF' : '#333333', 
+    fontSize: 18,
+    fontFamily: 'Montserrat-SemiBold',
+    textAlign: 'center'
+  },
+  scannedText: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    color: '#000000',
+    fontSize: 18
+  },
+  scannerCamera: {
+    flex: 1.5,
+    margin: 50,
+    overflow: 'hidden',
+    borderRadius: 30
   },
   submitButton: {
-    width: '50%',
-    paddingVertical: 10,
-    marginTop: 50,
-    borderRadius: 10,
+    width: wp('50%'),
     backgroundColor: '#942FFA',
-    alignSelf: 'center',
     alignItems: 'center',
+    alignSelf: 'center',
+    padding: 10,
+    borderRadius: 10
   },
   submitText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 1
+    fontSize: 18
   },
-  scannedText: {
-    color: '#000000',
-    fontSize: 20,
-    marginBottom: 20
-  }
-});
+})

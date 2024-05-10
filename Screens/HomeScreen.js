@@ -1,54 +1,51 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity, Appearance, Pressable, ScrollView, ImageBackground } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity, Appearance, Pressable, ScrollView } from 'react-native';
 import { Entypo } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Font from 'expo-font';
 
-export default function HomeScreen({route, navigation}) {
+export default function HomeScreen({ navigation }) {
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
-  const [isChecked, setIsChecked] = useState({
-    person1: false,
-    person2: false,
-    person3: false,
-    person4: false,
-    person5: false,
-    person6: false,
-    person7: false,
-    person8: false,
-    person9: false,
-    person10: false,
-    person11: false,
-    person12: false,
-    person13: false,
-    person14: false,
-    person16: false,
-    person17: false,
-    person18: false,
-    person19: false,
-    person20: false,
-    person21: false,
-    person22: false,
-    person23: false,
-    person24: false,
-    person25: false,
-  });
+  const [persons, setPersons] = useState([]);
+  const [totalScannerTicketQty, setTotalScannerTicketQty] = useState(0);
+  const [scannedTicket, setScannedTicket] = useState(0); 
 
-  const handleCheckboxChange = (clickedIndex) => {
-    setIsChecked(prevState => {
-      const checkboxState = { ...prevState };
-      const keys = Object.keys(checkboxState);
-      let index = keys.indexOf(clickedIndex);
-      if (checkboxState[clickedIndex] === false) { 
-        for (let i = 0; i <= index; i++) {
-          checkboxState[keys[i]] = true;
-        }
-      } else if (checkboxState[clickedIndex] === true) {
-        for (let i = 0; i <= index; i++) {
-          checkboxState[keys[i]] = false;
-        }
-      }
-      return checkboxState;
+  async function loadFonts() {
+    await Font.loadAsync({
+      'Montserrat-SemiBold': require('../assets/fonts/Montserrat-SemiBold.ttf'),
+      'Montserrat-Medium': require('../assets/fonts/Montserrat-Medium.ttf')
     });
-  };
+  }
+  
+  useEffect(() => {
+    loadFonts();
+  }, []);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const scannedDataJSON = await AsyncStorage.getItem('scannedData');
+        if (scannedDataJSON) {
+          const scannedData = JSON.parse(scannedDataJSON);
+          const count = scannedData.TotalBookTicket - scannedData.TotalShareTicket;
+          const initialPersons = Array(count).fill({ checked: false });
+          setPersons(initialPersons);
+          const scannedTicket = scannedData.TotalSacnnerTicketQty;
+          setScannedTicket(scannedTicket); 
+          const updatedPersons = initialPersons.map((person, index) => {
+            return { ...person, checked: index < scannedTicket };
+          });
+          setPersons(updatedPersons);
+        } else {
+          console.log('No scanned data found');
+        }
+      } catch (error) {
+        console.error('Error fetching scanned data:', error);
+      }
+    };
+    fetchData();
+  }, []);
+    
   useEffect(() => {
     const handleChange = (preferences) => {
       setColorScheme(preferences.colorScheme);
@@ -59,30 +56,95 @@ export default function HomeScreen({route, navigation}) {
     };
   }, []);
 
+  const handleCheckboxChange = (clickedIndex) => {
+    setPersons(prevPersons => {
+      const updatedPersons = prevPersons.map((person, index) => {
+        if (index <= clickedIndex) {
+          if (index < scannedTicket) {
+            return { ...person, checked: true }; 
+          } else {
+            return { ...person, checked: !person.checked }; 
+          }
+        } else {
+          return person; 
+        }
+      });
+      const newTotalScannerTicketQty = updatedPersons.filter((person, index) => person.checked && index >= scannedTicket).length;
+      setTotalScannerTicketQty(newTotalScannerTicketQty);
+      return updatedPersons;
+    });
+  };
+
+  const handleProceedData = async () => {
+    const scannedDataJSON = await AsyncStorage.getItem('scannedData');
+    const scannedData = JSON.parse(scannedDataJSON);
+    const storedDataJSON = await AsyncStorage.getItem('userData');
+    const storedData = JSON.parse(storedDataJSON);
+    try {
+        const response = await fetch(`https://actopassapi.actoscript.com/api/SacnneTicket/confirm-ticket`, {
+            method: 'POST',
+            headers: {
+                "Accept": 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + storedData.AuthorizationKey,
+            },
+            body: JSON.stringify({
+                "BookTicketDeatils": scannedData.BookTicketDeatils,
+                "ScannerLoginId": storedData.ScannerLoginId,
+                "TotalSacnnerTicketQty": totalScannerTicketQty,
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch data`);
+        }
+        const responseBody = await response.json();
+        let messageType = responseBody.ResponseMessage;
+        if (responseBody.ResponseType === "error") {
+          navigation.navigate('error', { messageType });
+        } else if (responseBody.ResponseType === "warning") {
+          navigation.navigate('warning', { messageType });
+        } else {
+          navigation.navigate('Success', { messageType });
+        }
+        return responseBody;
+    } catch (error) {
+        console.error('Error fetching or parsing data:', error);
+    }
+};
+
+   
   const CustomCheckbox = ({ checked }) => (
-    <View style={{ backgroundColor: checked ? '#942FFA' : colorScheme === 'dark' ? '#888888' : '#D8D8D8',height: 25,width: 25, justifyContent: 'center',alignItems: 'center',borderRadius: 10, }}>
+    <View style={{ backgroundColor: checked ? '#942FFA' : colorScheme === 'dark' ? '#888888' : '#D8D8D8', height: 25, width: 25, justifyContent: 'center', alignItems: 'center', borderRadius: 10, }}>
       {checked && <Entypo name="check" size={15} color="#FFF" />}
     </View>
   );
 
   return (
     <SafeAreaView style={styles(colorScheme).container}>
-        <Text style={styles(colorScheme).title}>GOLD</Text>
-        
-        <ScrollView style={{flex: 1}}>
-          <View style={styles(colorScheme).subContainer}>
-            {Object.keys(isChecked).map(person => (
-              <Pressable key={person} style={styles(colorScheme).row} onPress={() => handleCheckboxChange(person)}>
-                <Text style={styles(colorScheme).text}>Person {person.substring(6)}</Text>
-                <CustomCheckbox checked={isChecked[person]} />
-              </Pressable>
-            ))}
-          </View>
-        </ScrollView>
+      <Text style={styles(colorScheme).title}>GOLD</Text>
 
-        <TouchableOpacity style={styles(colorScheme).submitButton} onPress={() => {navigation.navigate('Success',  { messageType: 'success' })}}>
-          <Text style={styles(colorScheme).submitText}>Submit</Text>
-        </TouchableOpacity>
+      <ScrollView style={styles(colorScheme).subContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles(colorScheme).sub_Content}>
+          {persons.map((person, index) => (
+            <Pressable key={index} style={styles(colorScheme).row} onPress={() => handleCheckboxChange(index)}>
+              <Text style={styles(colorScheme).text}>Person  {index + 1}</Text>
+              <CustomCheckbox checked={person.checked} />
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
+
+      <TouchableOpacity 
+        style={[
+          styles(colorScheme).ProceedButton, 
+          totalScannerTicketQty < 1 && { opacity: 0.5, backgroundColor: colorScheme === 'dark' ? '#EEEEEE' : '#333333', }
+        ]} 
+        onPress={() => {totalScannerTicketQty >= 1 && handleProceedData()}}
+        disabled={totalScannerTicketQty < 1}
+      >
+        <Text style={styles(colorScheme).ProceedText}>Proceed</Text>
+      </TouchableOpacity>
+
     </SafeAreaView>
   );
 }
@@ -90,51 +152,42 @@ export default function HomeScreen({route, navigation}) {
 const styles = (colorScheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colorScheme === 'dark' ? '#000000' : '#FFFFFF', 
+    backgroundColor: colorScheme === 'dark' ? '#000000' : '#FFFFFF',
   },
   title: {
     paddingTop: 80,
     paddingBottom: 30,
-    color: '#FFFFFF', 
+    color: colorScheme === 'dark' ? '#FFFFFF' : '#000000',
     textAlign: 'center',
     fontSize: 30,
-    fontWeight: '800',
+    fontFamily: 'Montserrat-SemiBold'
   },
   subContainer: {
-    backgroundColor: colorScheme === 'dark' ? '#464646' : '#EEEEEE', 
+    backgroundColor: colorScheme === 'dark' ? '#464646' : '#EEEEEE',
     borderRadius: 15,
     borderLeftWidth: 3,
     borderLeftColor: '#9938fa',
-    padding: 5,
-    margin: 15,
+    padding: 10,
+    margin: 20,
   },
   row: {
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
     borderColor: colorScheme === 'dark' ? '#888888' : '#D8D8D8'
   },
   text: {
-    color: colorScheme === 'dark' ? '#cccccc' : '#000000', 
+    color: colorScheme === 'dark' ? '#cccccc' : '#000000',
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'Montserrat-Medium',
     letterSpacing: .5,
     textTransform: 'uppercase',
   },
-  checkedComponent: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#942FFA',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  submitButton: {
+  ProceedButton: {
     marginBottom: 10,
-    width: '95%',
+    width: '90%',
     paddingVertical: 15,
     marginTop: 50,
     borderRadius: 10,
@@ -143,8 +196,8 @@ const styles = (colorScheme) => StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
   },
-  submitText: {
-    color: '#FFFFFF', 
+  ProceedText: {
+    color: '#FFFFFF',
     fontSize: 20,
     fontWeight: 'bold',
     letterSpacing: 1

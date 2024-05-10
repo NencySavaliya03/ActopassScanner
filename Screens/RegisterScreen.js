@@ -1,21 +1,26 @@
-import { Appearance, Button, Image, ImageBackground, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Alert, Appearance, Button, Image, ImageBackground, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import Checkbox from 'react-native-modest-checkbox';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Font from 'expo-font';
 
-const RegisterScreen = ({ navigation }) => {
+const RegisterScreen = ({ navigation, globalDomain }) => { 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [checked, setChecked] = useState(false);
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
+  const [isError, setError] = useState('');
   const inputRef = useRef(null);
 
-  const handleCheckboxChange = () => {
-    setChecked(!checked);
-  };
+  async function loadFonts() {
+    await Font.loadAsync({
+      'Montserrat-SemiBold': require('../assets/fonts/Montserrat-SemiBold.ttf'),
+      'Montserrat-Medium': require('../assets/fonts/Montserrat-Medium.ttf')
+    });
+  }
+  loadFonts();
 
   useEffect(() => {
     const handleChange = (preferences) => {
@@ -41,6 +46,35 @@ const RegisterScreen = ({ navigation }) => {
     };
   }, []);
 
+  const handleLogin = async () => {
+    try {
+      const response = await fetch(`https://actopassapi.actoscript.com/api/Scanner`,{ 
+        method: 'POST',
+        headers: { 
+          "Accept": 'application/json',
+          'Content-Type': 'application/json',
+         },
+        body: JSON.stringify({
+          Code: email,
+          Password: password,
+        })
+      }
+      );
+      const userData = await response.json();
+      if (userData.Code === email && userData.Password === password) {
+        await AsyncStorage.setItem('userData', JSON.stringify(userData));
+        navigation.navigate('MainStack');
+      } else {
+        console.error('Invalid username or password');
+      }
+      setEmail('');
+      setPassword('');
+      setError('');
+      return userData;
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles(colorScheme).container}>
@@ -52,7 +86,7 @@ const RegisterScreen = ({ navigation }) => {
           >
             <View style={styles(colorScheme).loginContent}>
               <View style={styles(colorScheme).logo}>
-                <Text style={styles(colorScheme).text}>Login Account</Text>
+                <Text style={styles(colorScheme).text}> Login Account </Text>
               </View>
 
               <ScrollView keyboardShouldPersistTaps="handled" style={styles(colorScheme).inputContents}>
@@ -93,46 +127,32 @@ const RegisterScreen = ({ navigation }) => {
                           secureTextEntry={!showPassword}
                           onChangeText={value => { setPassword(value) }}
                           getRef={(e) => {
-                            this.textInput = e;
+                            this.textInput.focus = e;
                           }}
                           returnKeyType="done"
                         />
                         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                           <Image
                             style={styles(colorScheme).inputIcon}
-                            source={showPassword ? require('../images/hide.png') : require('../images/eye.png')}
+                            source={showPassword ? require('../images/eye-off.png') : require('../images/eye.png')}
                           />
                         </TouchableOpacity>
                       </View> 
 
                     </View>
 
-                    <View style={styles(colorScheme).checkboxAndForgetPassword}>
-                      <View style={styles(colorScheme).checkboxRow}>
-                        <Checkbox
-                          label={null}
-                          disabled={false}
-                          checked={checked}
-                          checkboxStyle={{ tintColor: colorScheme === 'dark' ? '#FFF' : '#575757', height: 25, width: 25, borderRadius: 20, backgroundColor: 'transparent' }}  
-                          onChange={handleCheckboxChange}  
-                        />
-                        <Text style={styles(colorScheme).checkboxLabel}>Remember me</Text>
-                      </View>
-                      <View style={styles(colorScheme).forgetPassword}>
-                        <Text style={styles(colorScheme).forgetPasswordText}>Forget Password?</Text>
-                      </View>
+                    <View style={{flex: .5}}>
+                      {isError ? <Text style={styles(colorScheme).errorText}>{isError}</Text> : null}
                     </View>
+
                   </View>
                 </ScrollView>
               </ScrollView>
 
               <View style={styles(colorScheme).submitData}>
-                <TouchableOpacity style={styles(colorScheme).submitButton} onPress={() => {navigation.navigate('Home')}}>
-                  <Text style={styles(colorScheme).submitText}>Login</Text>
+                <TouchableOpacity style={styles(colorScheme).submitButton} onPress={handleLogin}>
+                  <Text style={styles(colorScheme).submitText}> Login </Text>
                 </TouchableOpacity>
-                {/* <View style={styles(colorScheme).signupPrompt}>
-                  <Text style={styles(colorScheme).signupText}>Don't have an account? <Text style={styles(colorScheme).signupLinkText}> Sign Up </Text> </Text>
-                </View> */}
               </View>
             </View>
           </KeyboardAvoidingView>
@@ -158,7 +178,7 @@ const styles = (colorScheme) => StyleSheet.create({
   loginContent: {
     flex: .8,
     justifyContent: 'flex-end',
-    backgroundColor: colorScheme === 'dark' ? '#333' : '#FFFFFF', 
+    backgroundColor: colorScheme === 'dark' ? '#333333' : '#FFFFFF', 
     borderTopRightRadius: 50,
     borderTopLeftRadius: 50,
     elevation: 10,
@@ -171,7 +191,7 @@ const styles = (colorScheme) => StyleSheet.create({
   },
   text: {
     fontSize: 32,
-    fontWeight: 'bold', 
+    fontFamily: 'Montserrat-SemiBold',
     color: colorScheme === 'dark' ? '#FFF' : '#000',
     textAlign: 'center',
   },
@@ -183,7 +203,7 @@ const styles = (colorScheme) => StyleSheet.create({
   },
   inputContainer: {
     flex: 1,
-    height: 50,
+    height: hp('6%'),
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colorScheme === 'dark' ? '#444' : '#FFFFFF',
@@ -205,33 +225,16 @@ const styles = (colorScheme) => StyleSheet.create({
   },
   userInput: {
     flex: 1,
-    fontSize: 20,
+    fontSize: 18,
     paddingHorizontal: 10,
     color: colorScheme === 'dark' ? '#FFF' : '#5A5A5A',
-    fontWeight: '600',
+    fontFamily: 'Montserrat-SemiBold'
   },
-
-  checkboxAndForgetPassword: {
-    justifyContent: 'space-between', 
-    flexDirection:'row',
-    alignItems: 'center',
-  },
-  checkboxRow: {
-    flexDirection:'row',
-    alignItems: 'center',
-  },
-  checkboxLabel: {
-    fontSize: 18,
-    color: colorScheme === 'dark' ? '#FFF' : '#666666',
-    fontWeight: 'bold'
-  },
-  forgetPassword: {
-    alignItems: 'center',
-  },
-  forgetPasswordText: {
-    fontSize: 18,
-    color: '#942FFA',
-    fontWeight: '600'
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: '200'
   },
 
   submitData: {
@@ -251,22 +254,8 @@ const styles = (colorScheme) => StyleSheet.create({
   submitText: {
     color: '#FFFFFF',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat-SemiBold'
   },
-  // signupPrompt: {
-  //   flexDirection: 'row',
-  //   alignContent: 'center',
-  // },
-  // signupText: {
-  //   fontSize: 18,
-  //   color: colorScheme === 'dark' ? '#FFF' : '#9e9e9e',
-  //   fontWeight: '600',
-  // },
-  // signupLinkText: {
-  //   fontSize: 18,
-  //   color: '#942FFA',
-  //   fontWeight: '600'
-  // }
 });
 
 export default RegisterScreen;
