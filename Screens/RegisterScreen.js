@@ -63,13 +63,13 @@ const RegisterScreen = ({ navigation, globalDomain }) => {
       const userData = await response.json();
       if (userData.Code === email && userData.Password === password) {
         await AsyncStorage.setItem('userData', JSON.stringify(userData));
-        navigation.navigate('MainStack');
+        navigation.navigate('Scanner');
       } else {
         console.error('Invalid username or password');
       }
-      setEmail('');
-      setPassword('');
-      setError('');
+      // setEmail('');
+      // setPassword('');
+      // setError('');
       return userData;
     } catch (error) {
       console.error(error);

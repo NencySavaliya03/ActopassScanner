@@ -14,6 +14,17 @@ export default function Success({ navigation, route }) {
       subscription.remove();
     };
   }, []);
+
+  async function loadFonts() {
+    await Font.loadAsync({
+      'Montserrat-SemiBold': require('../assets/fonts/Montserrat-SemiBold.ttf'),
+      'Montserrat-Medium': require('../assets/fonts/Montserrat-Medium.ttf')
+    });
+  }
+  useEffect(() => {
+    loadFonts();
+  }, []);
+
   console.log(messageType);
 
   let imageSource;
@@ -31,7 +42,7 @@ export default function Success({ navigation, route }) {
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 50 }}>
         <ImageBackground
           source={require('../images/output-onlinegiftools.gif')}
-          style={{height: 300,width: 300,justifyContent: 'center',alignItems: 'center'}}
+          style={{height: 200,width: 200,justifyContent: 'center',alignItems: 'center'}}
           repeat={1}
         >
           <View style={styles(colorScheme).Success}>
@@ -40,8 +51,7 @@ export default function Success({ navigation, route }) {
         </ImageBackground>
         <View style={{ gap: 30, paddingHorizontal: 60 }}>
           <View style={{ gap: 5 }}>
-            <Text style={{ fontSize: 36, color: colorScheme === 'dark' ? '#FFFFFF' : '#000000', fontWeight: 'bold', textAlign: 'center' }}>Lorem Ipsum</Text>
-            <Text style={{ fontSize: 20, color: colorScheme === 'dark' ? '#FFFFFF' : '#000000', fontWeight: '400', textAlign: 'center' }}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. </Text>
+            <Text style={{ fontSize: 26, color: colorScheme === 'dark' ? '#FFFFFF' : '#000000', fontFamily: 'Montserrat-SemiBold', textAlign: 'center' }}>Successfully Completed</Text>
           </View>
           <TouchableOpacity style={styles(colorScheme).submitButton} onPress={() => navigation.navigate('Scanner')}>
             <Text style={styles(colorScheme).submitText}> Continue </Text>

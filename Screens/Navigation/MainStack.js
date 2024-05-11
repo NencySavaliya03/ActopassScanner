@@ -54,7 +54,7 @@ export default function MainStack() {
           drawerInactiveTintColor: colorScheme === 'dark' ? '#FFFFFF' : '#000000',
         }}
       >
-        <Drawer.Screen name="Home" component={MainStack} 
+        <Drawer.Screen name="MainStack" component={MainStack} 
           options={{
             drawerIcon: ({ color }) => (
               <AntDesign name='home' size={25} color={color} />
@@ -68,14 +68,14 @@ export default function MainStack() {
             )
           }}
         />
-         <Drawer.Screen name="Profile" component={ProfileScreen}
+        <Drawer.Screen name="Profile" component={ProfileScreen}
           options={{
             drawerIcon: ({ color }) => (
               <AntDesign name='user' size={25} color={color} />
             )
           }}
         />
-         <Drawer.Screen name="History" component={HistoryScreen}
+        <Drawer.Screen name="History" component={HistoryScreen}
           options={{
             drawerIcon: ({ color }) => (
               <Octicons name='history' size={25} color={color} />

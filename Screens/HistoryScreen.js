@@ -49,12 +49,12 @@ export default function HistoryScreen() {
         if (!response.ok) {
           throw new Error("Failed to fetch history data");
         }
+        console.log('historyDatah',historyData);
         const historyData = await response.json();
-        console.log(historyData);
         // dispatch(SET_HISTORYDATA(historyData[0]))
         await AsyncStorage.setItem("historyData", JSON.stringify(historyData));
       } catch (error) {
-        console.error("Error fetching profile data:", error);
+        console.error("Error fetching history data:", error);
       }
     };
     fetchData();

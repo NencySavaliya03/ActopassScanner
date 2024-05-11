@@ -81,6 +81,8 @@ export default function HomeScreen({ navigation }) {
     const storedDataJSON = await AsyncStorage.getItem('userData');
     const storedData = JSON.parse(storedDataJSON);
     try {
+        console.log('book ticket', scannedData);
+        console.log('totalScannerTicketQty', totalScannerTicketQty);
         const response = await fetch(`https://actopassapi.actoscript.com/api/SacnneTicket/confirm-ticket`, {
             method: 'POST',
             headers: {
