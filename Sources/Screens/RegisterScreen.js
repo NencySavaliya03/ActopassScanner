@@ -11,13 +11,13 @@ const RegisterScreen = ({ navigation, globalDomain }) => {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
-  const [isError, setError] = useState('');
+  const [isError, setError] = useState(false);
   const inputRef = useRef(null);
 
   async function loadFonts() {
     await Font.loadAsync({
-      'Montserrat-SemiBold': require('../assets/fonts/Montserrat-SemiBold.ttf'),
-      'Montserrat-Medium': require('../assets/fonts/Montserrat-Medium.ttf')
+      'Montserrat-SemiBold': require('../../assets/fonts/Montserrat-SemiBold.ttf'),
+      'Montserrat-Medium': require('../../assets/fonts/Montserrat-Medium.ttf')
     });
   }
   loadFonts();
@@ -63,13 +63,14 @@ const RegisterScreen = ({ navigation, globalDomain }) => {
       const userData = await response.json();
       if (userData.Code === email && userData.Password === password) {
         await AsyncStorage.setItem('userData', JSON.stringify(userData));
-        navigation.navigate('Scanner');
+        navigation.navigate('MainStack');
       } else {
+        setError(true)
         console.error('Invalid username or password');
       }
-      // setEmail('');
-      // setPassword('');
-      // setError('');
+      setEmail('');
+      setPassword('');
+      setError('');
       return userData;
     } catch (error) {
       console.error(error);
@@ -78,7 +79,7 @@ const RegisterScreen = ({ navigation, globalDomain }) => {
 
   return (
     <SafeAreaView style={styles(colorScheme).container}>
-        <ImageBackground style={styles(colorScheme).imageContainer} source={require('../images/backgroundImage.jpg')} >
+        <ImageBackground style={styles(colorScheme).imageContainer} source={require('../../images/backgroundImage.jpg')} >
           <KeyboardAvoidingView
             style={styles(colorScheme).keyboardAvoidingContainer}
             behavior={Platform.OS === "ios" ? "height" : null}
@@ -95,7 +96,7 @@ const RegisterScreen = ({ navigation, globalDomain }) => {
                   <View style={styles(colorScheme).inputContents}>
                     
                     <View style={[styles(colorScheme).inputContainer, { borderColor: isEmailFocused ? '#cc9cfc' : colorScheme === 'dark' ? '#333' : '#fff' }]}>
-                      <Image source={require('../images/user.png')} style={styles(colorScheme).inputIcon}/>
+                      <Image source={require('../../images/user.png')} style={styles(colorScheme).inputIcon}/>
                       <TextInput
                         style={styles(colorScheme).userInput}
                         placeholder="Enter Username or Mobile"
@@ -114,7 +115,7 @@ const RegisterScreen = ({ navigation, globalDomain }) => {
                     </View>
 
                     <View style={[styles(colorScheme).inputContainer, { borderColor: isPasswordFocused ? '#cc9cfc' : colorScheme === 'dark' ? '#333' : '#fff' }]}>
-                      <Image source={require('../images/unlock.png')} style={styles(colorScheme).inputIcon}/>
+                      <Image source={require('../../images/unlock.png')} style={styles(colorScheme).inputIcon}/>
                       <View style={styles(colorScheme).passwordContent}>
                         <TextInput
                           ref={(inputRef)}
@@ -134,7 +135,7 @@ const RegisterScreen = ({ navigation, globalDomain }) => {
                         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                           <Image
                             style={styles(colorScheme).inputIcon}
-                            source={showPassword ? require('../images/eye-off.png') : require('../images/eye.png')}
+                            source={showPassword ? require('../../images/eye-off.png') : require('../../images/eye.png')}
                           />
                         </TouchableOpacity>
                       </View> 
@@ -142,7 +143,7 @@ const RegisterScreen = ({ navigation, globalDomain }) => {
                     </View>
 
                     <View style={{flex: .5}}>
-                      {isError ? <Text style={styles(colorScheme).errorText}>{isError}</Text> : null}
+                      {isError === true ? <Text style={styles(colorScheme).errorText}>Invalid username or password</Text> : null}
                     </View>
 
                   </View>

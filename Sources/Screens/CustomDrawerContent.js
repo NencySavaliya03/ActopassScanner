@@ -18,7 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import * as Font from "expo-font";
 import { useDispatch, useSelector } from "react-redux";
-import { SET_USERDATA } from "../redux/Login/loginSlice";
+import { SET_USERDATA } from "../../redux/Login/loginSlice";
 
 export default function CustomDrawerContent(props) {
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
@@ -29,8 +29,8 @@ export default function CustomDrawerContent(props) {
  
   async function loadFonts() {
     await Font.loadAsync({
-      "Montserrat-SemiBold": require("../assets/fonts/Montserrat-SemiBold.ttf"),
-      "Montserrat-Medium": require("../assets/fonts/Montserrat-Medium.ttf"),
+      "Montserrat-SemiBold": require("../../assets/fonts/Montserrat-SemiBold.ttf"),
+      "Montserrat-Medium": require("../../assets/fonts/Montserrat-Medium.ttf"),
     });
   }
   loadFonts();
@@ -104,7 +104,7 @@ export default function CustomDrawerContent(props) {
         style={{backgroundColor: colorScheme === 'dark' ? '#202020' : '#FFFFFF'}}
       >
         <ImageBackground
-          source={require("../images/backgroundImage.jpg")}
+          source={require("../../images/backgroundImage.jpg")}
           style={{ padding: 20 }}
         >
           <TouchableOpacity onPress={() => {  navigation.navigate("Profile");}}>

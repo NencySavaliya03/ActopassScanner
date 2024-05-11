@@ -1,7 +1,7 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import RegisterScreen from "../RegisterScreen";
 import MainStack from "./MainStack";
+import RegisterScreen from "../Screens/RegisterScreen";
 const Stack = createNativeStackNavigator();
 
 export default function AuthorizedStack() {

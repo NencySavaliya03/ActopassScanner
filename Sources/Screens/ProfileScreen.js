@@ -21,8 +21,8 @@ export default function ProfileScreen() {
 
   async function loadFonts() {
     await Font.loadAsync({
-      "Montserrat-SemiBold": require("../assets/fonts/Montserrat-SemiBold.ttf"),
-      "Montserrat-Medium": require("../assets/fonts/Montserrat-Medium.ttf"),
+      "Montserrat-SemiBold": require("../../assets/fonts/Montserrat-SemiBold.ttf"),
+      "Montserrat-Medium": require("../../assets/fonts/Montserrat-Medium.ttf"),
     });
   }
   loadFonts();
@@ -41,7 +41,7 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles(colorScheme).container}>
       <ImageBackground
         style={styles(colorScheme).imageContainer}
-        source={require("../images/backgroundImage.jpg")}
+        source={require("../../images/backgroundImage.jpg")}
       >
         <KeyboardAvoidingView
           style={styles(colorScheme).keyboardAvoidingContainer}
@@ -65,7 +65,7 @@ export default function ProfileScreen() {
                 <View>
                   <View style={styles(colorScheme).inputPlaceholder}>
                     <Image
-                      source={require("../images/face-id.png")}
+                      source={require("../../images/face-id.png")}
                       style={styles(colorScheme).inputIcons}
                     />
                     <Text style={styles(colorScheme).inputText}> User ID </Text>
@@ -77,7 +77,7 @@ export default function ProfileScreen() {
                 <View>
                   <View style={styles(colorScheme).inputPlaceholder}>
                     <Image
-                      source={require("../images/usericon.png")}
+                      source={require("../../images/usericon.png")}
                       style={styles(colorScheme).inputIcons}
                     />
                     <Text style={styles(colorScheme).inputText}>
@@ -92,7 +92,7 @@ export default function ProfileScreen() {
                 <View>
                   <View style={styles(colorScheme).inputPlaceholder}>
                     <Image
-                      source={require("../images/envelope.png")}
+                      source={require("../../images/envelope.png")}
                       style={styles(colorScheme).inputIcons}
                     />
                     <Text style={styles(colorScheme).inputText}>
@@ -107,7 +107,7 @@ export default function ProfileScreen() {
                 <View>
                   <View style={styles(colorScheme).inputPlaceholder}>
                     <Image
-                      source={require("../images/phone-call.png")}
+                      source={require("../../images/phone-call.png")}
                       style={styles(colorScheme).inputIcons}
                     />
                     <Text style={styles(colorScheme).inputText}>

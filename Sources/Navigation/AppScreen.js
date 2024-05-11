@@ -5,21 +5,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AppScreen() {
   const [isAuthorized, setIsAuthorized] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(true); 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const Authorized = await AsyncStorage.getItem("userData");
-        console.log(typeof Authorized, Authorized);
-        if (Authorized) {
+        if (Authorized) { 
           setIsAuthorized(true);
         }
       } catch (error) {
         console.error("Error fetching authorization status:", error);
+      } finally {
+        setIsLoading(false); 
       }
     };
     fetchData();
   }, []);
+
+  if (isLoading) {
+    return null; 
+  }
 
   return (
     <>

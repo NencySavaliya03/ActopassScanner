@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import CustomDrawerContent from '../CustomDrawerContent';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import Scanner from '../Scanner';
-import HomeScreen from '../HomeScreen';
-import Success from '../Success';
-import ProfileScreen from '../ProfileScreen';
-import HistoryScreen from '../HistoryScreen';
-import RegisterScreen from '../RegisterScreen'
+import Scanner from "../Screens/Scanner"
+import ProfileScreen from "../Screens/ProfileScreen"
+import HistoryScreen from "../Screens/HistoryScreen"
+import RegisterScreen from "../Screens/RegisterScreen"
+import CustomDrawerContent from "../Screens/CustomDrawerContent"
 import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
 import { Octicons } from '@expo/vector-icons';
@@ -34,8 +32,6 @@ export default function MainStack() {
         return (
           <Stack.Navigator initialRouteName="Scanner" screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Scanner" component={Scanner} />
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="Success" component={Success} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="History" component={HistoryScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
@@ -54,13 +50,6 @@ export default function MainStack() {
           drawerInactiveTintColor: colorScheme === 'dark' ? '#FFFFFF' : '#000000',
         }}
       >
-        <Drawer.Screen name="MainStack" component={MainStack} 
-          options={{
-            drawerIcon: ({ color }) => (
-              <AntDesign name='home' size={25} color={color} />
-            )
-          }}
-        />
         <Drawer.Screen name="Scanner" component={Scanner}
           options={{
             drawerIcon: ({ color }) => (
@@ -82,6 +71,7 @@ export default function MainStack() {
             )
           }}
         />
+        <Drawer.Screen name=" " component={MainStack}  />
       </Drawer.Navigator>
     );
 }
