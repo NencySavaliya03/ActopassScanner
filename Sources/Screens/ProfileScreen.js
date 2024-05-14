@@ -15,6 +15,7 @@ import { Appearance } from "react-native";
 import * as Font from "expo-font";
 import { useSelector } from "react-redux";
 
+
 export default function ProfileScreen() {
   const userData = useSelector((state) => state.loginData.userData);
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());

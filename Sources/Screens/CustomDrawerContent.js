@@ -20,7 +20,7 @@ import * as Font from "expo-font";
 import { useDispatch, useSelector } from "react-redux";
 import { SET_USERDATA } from "../../redux/Login/loginSlice";
 
-export default function CustomDrawerContent(props) {
+export default function CustomDrawerContent(props, globalDomain) {
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -74,7 +74,7 @@ export default function CustomDrawerContent(props) {
         const userDataJSON = await AsyncStorage.getItem("userData");
         const userData = JSON.parse(userDataJSON);
         const response = await fetch(
-          `https://actopassapi.actoscript.com/api/SacnneTicket/Profile/${userData.ScannerLoginId}`,
+          `${globalDomain}/SacnneTicket/Profile/${userData.ScannerLoginId}`,
           {
             headers: {
               Accept: "application/json",

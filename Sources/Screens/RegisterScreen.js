@@ -48,7 +48,7 @@ const RegisterScreen = ({ navigation, globalDomain }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch(`https://actopassapi.actoscript.com/api/Scanner`,{ 
+      const response = await fetch(`${globalDomain}/api/Scanner`,{ 
         method: 'POST',
         headers: { 
           "Accept": 'application/json',
@@ -125,12 +125,12 @@ const RegisterScreen = ({ navigation, globalDomain }) => {
                           placeholderTextColor={'#b3b3b3'}
                           onFocus={() => setIsPasswordFocused(true)}
                           onBlur={() => setIsPasswordFocused(false)}
-                          secureTextEntry={!showPassword}
+                          secureTextEntry={true}
                           onChangeText={value => { setPassword(value) }}
                           getRef={(e) => {
                             this.textInput.focus = e;
                           }}
-                          returnKeyType="done"
+                          returnKeyType="done"             
                         />
                         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                           <Image

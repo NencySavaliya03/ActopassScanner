@@ -10,6 +10,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
 import { Octicons } from '@expo/vector-icons';
 import { Appearance } from 'react-native';
+import AuthorizedStack from './AuthorizedStack';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -35,6 +36,7 @@ export default function MainStack() {
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="History" component={HistoryScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="MainStack" component={MainStack} />
           </Stack.Navigator>
         );
       };

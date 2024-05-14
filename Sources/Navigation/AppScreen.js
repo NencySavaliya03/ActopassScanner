@@ -6,6 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function AppScreen() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true); 
+  const globalDomain = "http://192.168.1.34/ActoPassCoreApi";
+  // const globalDomain = "https://actopassapi.actoscript.com";
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -28,7 +31,7 @@ export default function AppScreen() {
 
   return (
     <>
-      {isAuthorized ? <MainStack /> : <AuthorizedStack />}
+      {isAuthorized ? <MainStack globalDomain={globalDomain} /> : <AuthorizedStack globalDomain={globalDomain} />}
     </>
   );
 }

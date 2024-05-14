@@ -1,16 +1,17 @@
 import { Text, View, StyleSheet, Button, TouchableOpacity, Linking, Appearance, SafeAreaView, Animated, Modal, ScrollView, Easing,} from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-import { Camera, CameraType } from "expo-camera";
+import { Camera, CameraView } from "expo-camera";
 import * as Font from "expo-font";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp} from "react-native-responsive-screen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { Entypo } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from "react-native";
 
 export default function Scanner({ navigation, globalDomain }) {
   const [hasPermission, setHasPermission] = useState(null);
+  const [focusedScreen, setFocusedScreen] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [scanData, setScanData] = useState(null);
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
@@ -21,9 +22,9 @@ export default function Scanner({ navigation, globalDomain }) {
   const [scannedTicket, setScannedTicket] = useState(0); 
   const [success, setSuccess] = useState(false);
   const [warning, setWarning] = useState(false);
-  const cameraRef = useRef(null);
   const modalAnimation = useRef(new Animated.Value(hp("100%"))).current;
   const successOpacity = useRef(new Animated.Value(0)).current;
+  const cameraRef = useRef(null);
 
   async function loadFonts() {
     await Font.loadAsync({
@@ -51,14 +52,53 @@ export default function Scanner({ navigation, globalDomain }) {
     getCameraPermissions();
   }, []);
 
+  useEffect(() => {
+    if (success || warningMessage || warning) {
+      Animated.timing(successOpacity, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(successOpacity, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [success, warningMessage, warning]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const startCamera = async () => {
+        if (cameraRef.current) {
+          await cameraRef.current.resumePreview();
+          setScanned(false)
+        }
+      };
+      const stopCamera = async () => {
+        if (cameraRef.current) {
+          await cameraRef.current.pausePreview();
+        }
+      };
+      startCamera();
+      return () => {
+        stopCamera();
+      };
+    }, [])
+  );
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener("blur", handleBlur);
-    return () => {
-      unsubscribe();
-    };
-  }, [navigation]);
-  
+    if (focusedScreen && hasPermission) {
+      Animated.timing(modalAnimation, {
+        toValue: 1,
+        duration: 1000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [focusedScreen, hasPermission]);
+
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     setScanData(data);
@@ -66,7 +106,7 @@ export default function Scanner({ navigation, globalDomain }) {
     const storedData = JSON.parse(storedDataJSON);
     try {
       const response = await fetch(
-        "https://actopassapi.actoscript.com/api/SacnneTicket",
+        `${globalDomain}/api/SacnneTicket`,
         {
           method: "POST",
           headers: {
@@ -98,22 +138,9 @@ export default function Scanner({ navigation, globalDomain }) {
     }
   };
 
-  const handleFocusCamera = () => {
-    if (cameraRef.current) {
-      cameraRef.current.resumePreview();
-      setScanned(false);
-      setWarningMessage("");
-    }
-  };
-  const handleBlur = () => {
-    if (cameraRef.current) {
-      cameraRef.current.pausePreview();
-    }
-  };
-
   if (hasPermission === null) {
     return <Text>Requesting for camera permission</Text>;
-  }
+  } 
   if (hasPermission === false) {
     return <Text>No access to camera</Text>;
   }
@@ -169,7 +196,7 @@ export default function Scanner({ navigation, globalDomain }) {
     try {
         console.log('book ticket', scannedData);
         console.log('totalScannerTicketQty', totalScannerTicketQty);
-        const response = await fetch(`https://actopassapi.actoscript.com/api/SacnneTicket/confirm-ticket`, {
+        const response = await fetch(`${globalDomain}/api/SacnneTicket/confirm-ticket`, {
             method: 'POST',
             headers: {
                 "Accept": 'application/json',
@@ -199,12 +226,6 @@ export default function Scanner({ navigation, globalDomain }) {
     }
   };
 
-  const CustomCheckbox = ({ checked }) => (
-    <View style={{ backgroundColor: checked ? '#942FFA' : colorScheme === 'dark' ? '#888888' : '#D8D8D8', height: 25, width: 25, justifyContent: 'center', alignItems: 'center', borderRadius: 10, }}>
-      {checked && <Entypo name="check" size={15} color="#FFF" />}
-    </View>
-  );
-
   // Modal Animation 
   const showModal = () => {
     Animated.timing(modalAnimation, {
@@ -221,22 +242,11 @@ export default function Scanner({ navigation, globalDomain }) {
     setWarning(false);
   }, 5000);
 
-  
-  useEffect(() => {
-    if (success || warningMessage || warning) {
-      Animated.timing(successOpacity, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(successOpacity, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [success, warningMessage, warning]);
+  const CustomCheckbox = ({ checked }) => (
+    <View style={{ backgroundColor: checked ? '#942FFA' : colorScheme === 'dark' ? '#888888' : '#D8D8D8', height: 25, width: 25, justifyContent: 'center', alignItems: 'center', borderRadius: 10, }}>
+      {checked && <Entypo name="check" size={15} color="#FFF" />}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles(colorScheme).container}>
@@ -257,7 +267,6 @@ export default function Scanner({ navigation, globalDomain }) {
                 <Text style={{ fontFamily: 'Montserrat-SemiBold', fontSize: 16 }}>
                   {success ? 'Ticket successfully scanned' : warningMessage ? warningMessage : 'Something is Went wrong'}
                 </Text>
-
               </View>
             </View> 
           </LinearGradient>
@@ -267,10 +276,13 @@ export default function Scanner({ navigation, globalDomain }) {
 
       {/* Camera View */}
       <View style={styles(colorScheme).scannerCamera}>
-        <Camera
-          type={Camera.Constants.Type.back}
+        <CameraView
+          // type={Camera.Constants.Type.back}
           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          ref={cameraRef}
+          barcodeScannerSettings={{
+            barcodeTypes: ["qr", "pdf417"],
+          }}
+          // ref={cameraRef}
           style={{ flex: 1 }}
         />
       </View>
@@ -278,7 +290,7 @@ export default function Scanner({ navigation, globalDomain }) {
       {/* Modal Component */}
       {IsshowModal && (
         <Modal transparent={true}>
-          <Animated.View style={{ ...StyleSheet.absoluteFillObject, flex: 1, justifyContent: "flex-end", alignItems: "center", backgroundColor: colorScheme === "dark" ? "rgba(128, 128, 128, 0.5)" : "rgba(204, 204, 204, 0.8)", transform: [{ translateY: modalAnimation }] }}>
+          <Animated.View style={{ ...StyleSheet.absoluteFillObject, flex: 1, justifyContent: "flex-end", alignItems: "center", transform: [{ translateY: modalAnimation }] }}>
             <View style={{ backgroundColor: colorScheme === "dark" ? "#262626" : "#FFFFFF", padding: 15,width: '95%',height: '75%', borderRadius: 10 }}>
               <ScrollView style={styles(colorScheme).subContainer} showsVerticalScrollIndicator={false}>
                 <View style={styles(colorScheme).sub_Content}>
