@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SET_HISTORYDATA } from "../../redux/Login/loginSlice";
 
-export default function HistoryScreen({ globalDomain }) {
+export default function HistoryScreen({ }) {
   const dispatch = useDispatch();
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
   const historyData = useSelector((state) => state.loginData.historyData);
@@ -41,7 +41,7 @@ export default function HistoryScreen({ globalDomain }) {
         const userData = JSON.parse(userDataJSON);
 
         const response = await fetch(
-          `${globalDomain}/SacnneTicket/TicketHistory/${userData.ScannerLoginId}`, {
+          `${global.DomainName}/api/SacnneTicket/TicketHistory/${userData.ScannerLoginId}`, {
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",

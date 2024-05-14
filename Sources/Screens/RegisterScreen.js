@@ -1,10 +1,10 @@
-import { Alert, Appearance, Button, Image, ImageBackground, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import {  Appearance,  Image, ImageBackground, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Font from 'expo-font';
 
-const RegisterScreen = ({ navigation, globalDomain }) => { 
+const RegisterScreen = ({ navigation }) => { 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isEmailFocused, setIsEmailFocused] = useState(false);
@@ -48,7 +48,7 @@ const RegisterScreen = ({ navigation, globalDomain }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch(`${globalDomain}/api/Scanner`,{ 
+      const response = await fetch(`${global.DomainName}/api/Scanner`,{ 
         method: 'POST',
         headers: { 
           "Accept": 'application/json',
@@ -186,6 +186,7 @@ const styles = (colorScheme) => StyleSheet.create({
   },
   logo: {
     flex: 2,
+    width: wp('100%'),
     justifyContent: 'flex-end',
     paddingBottom: 20,
     alignItems: 'center',

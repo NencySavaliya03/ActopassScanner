@@ -4,12 +4,11 @@ import { Camera, CameraView } from "expo-camera";
 import * as Font from "expo-font";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp} from "react-native-responsive-screen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { Entypo } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from "react-native";
 
-export default function Scanner({ navigation, globalDomain }) {
+export default function Scanner() {
   const [hasPermission, setHasPermission] = useState(null);
   const [focusedScreen, setFocusedScreen] = useState(false);
   const [scanned, setScanned] = useState(false);
@@ -24,7 +23,6 @@ export default function Scanner({ navigation, globalDomain }) {
   const [warning, setWarning] = useState(false);
   const modalAnimation = useRef(new Animated.Value(hp("100%"))).current;
   const successOpacity = useRef(new Animated.Value(0)).current;
-  const cameraRef = useRef(null);
 
   async function loadFonts() {
     await Font.loadAsync({
@@ -68,26 +66,6 @@ export default function Scanner({ navigation, globalDomain }) {
     }
   }, [success, warningMessage, warning]);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const startCamera = async () => {
-        if (cameraRef.current) {
-          await cameraRef.current.resumePreview();
-          setScanned(false)
-        }
-      };
-      const stopCamera = async () => {
-        if (cameraRef.current) {
-          await cameraRef.current.pausePreview();
-        }
-      };
-      startCamera();
-      return () => {
-        stopCamera();
-      };
-    }, [])
-  );
-
   useEffect(() => {
     if (focusedScreen && hasPermission) {
       Animated.timing(modalAnimation, {
@@ -106,7 +84,7 @@ export default function Scanner({ navigation, globalDomain }) {
     const storedData = JSON.parse(storedDataJSON);
     try {
       const response = await fetch(
-        `${globalDomain}/api/SacnneTicket`,
+        `${global.DomainName}/api/SacnneTicket`,
         {
           method: "POST",
           headers: {
@@ -196,7 +174,7 @@ export default function Scanner({ navigation, globalDomain }) {
     try {
         console.log('book ticket', scannedData);
         console.log('totalScannerTicketQty', totalScannerTicketQty);
-        const response = await fetch(`${globalDomain}/api/SacnneTicket/confirm-ticket`, {
+        const response = await fetch(`${global.DomainName}/api/SacnneTicket/confirm-ticket`, {
             method: 'POST',
             headers: {
                 "Accept": 'application/json',
@@ -276,13 +254,11 @@ export default function Scanner({ navigation, globalDomain }) {
 
       {/* Camera View */}
       <View style={styles(colorScheme).scannerCamera}>
-        <CameraView
-          // type={Camera.Constants.Type.back}
+        <Camera
           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
           barcodeScannerSettings={{
             barcodeTypes: ["qr", "pdf417"],
           }}
-          // ref={cameraRef}
           style={{ flex: 1 }}
         />
       </View>
