@@ -1,14 +1,15 @@
 import { Text, View, StyleSheet, Button, TouchableOpacity, Linking, Appearance, SafeAreaView, Animated, Modal, ScrollView, Easing,} from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-import { Camera, CameraView } from "expo-camera";
+import { Camera, CameraType } from "expo-camera";
 import * as Font from "expo-font";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp} from "react-native-responsive-screen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { Entypo } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from "react-native";
 
-export default function Scanner() {
+export default function Scanner({ navigation }) {
   const [hasPermission, setHasPermission] = useState(null);
   const [focusedScreen, setFocusedScreen] = useState(false);
   const [scanned, setScanned] = useState(false);
@@ -23,6 +24,7 @@ export default function Scanner() {
   const [warning, setWarning] = useState(false);
   const modalAnimation = useRef(new Animated.Value(hp("100%"))).current;
   const successOpacity = useRef(new Animated.Value(0)).current;
+  const cameraRef = useRef(null);
 
   async function loadFonts() {
     await Font.loadAsync({
@@ -65,6 +67,26 @@ export default function Scanner() {
       }).start();
     }
   }, [success, warningMessage, warning]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const startCamera = async () => {
+        if (cameraRef.current) {
+          await cameraRef.current.resumePreview();
+          setScanned(false)
+        }
+      };
+      const stopCamera = async () => {
+        if (cameraRef.current) {
+          await cameraRef.current.pausePreview();
+        }
+      };
+      startCamera();
+      return () => {
+        stopCamera();
+      };
+    }, [])
+  );
 
   useEffect(() => {
     if (focusedScreen && hasPermission) {
@@ -255,10 +277,9 @@ export default function Scanner() {
       {/* Camera View */}
       <View style={styles(colorScheme).scannerCamera}>
         <Camera
+          type={Camera.Constants.Type.back}
           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          barcodeScannerSettings={{
-            barcodeTypes: ["qr", "pdf417"],
-          }}
+          ref={cameraRef}
           style={{ flex: 1 }}
         />
       </View>
