@@ -226,6 +226,11 @@ export default function Scanner({ navigation }) {
     }
   };
 
+  const handleFocusCamera = () => {
+    setScanned(false);
+    setScanData(null);
+  }
+
   // Modal Animation 
   const showModal = () => {
     Animated.timing(modalAnimation, {

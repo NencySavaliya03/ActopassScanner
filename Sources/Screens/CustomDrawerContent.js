@@ -56,6 +56,7 @@ export default function CustomDrawerContent(props) {
 
   const confirmSignOut = () => {
     setShowSignOutConfirmation(true);
+    navigation.navigate('AuthorizedStack');
   };
 
   const cancelSignOut = () => {
