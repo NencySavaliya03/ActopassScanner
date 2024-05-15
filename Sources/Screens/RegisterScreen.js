@@ -139,7 +139,6 @@ const RegisterScreen = ({ navigation }) => {
                           />
                         </TouchableOpacity>
                       </View> 
-
                     </View>
 
                     <View style={{flex: .5}}>
@@ -192,6 +191,7 @@ const styles = (colorScheme) => StyleSheet.create({
     alignItems: 'center',
   },
   text: {
+    width: '100%',
     fontSize: 32,
     fontFamily: 'Montserrat-SemiBold',
     color: colorScheme === 'dark' ? '#FFF' : '#000',
@@ -254,7 +254,9 @@ const styles = (colorScheme) => StyleSheet.create({
     alignItems: 'center',      
   },
   submitText: {
+    width: '100%',
     color: '#FFFFFF',
+    textAlign: 'center',
     fontSize: 20,
     fontFamily: 'Montserrat-SemiBold'
   },

@@ -80,7 +80,7 @@ export default function HistoryScreen({ }) {
         {Array.isArray(historyData) && historyData.length > 0 ? (
           historyData.map((item, index) => (
             <View key={index} style={styles(colorScheme).subContainer}>
-              <View style={{ overflow: "hidden", borderRadius: 15 }}>
+              <View style={{ overflow: "hidden", borderRadius: 15,backgroundColor: "#CCCCCC" }}>
               {item.EventMainImage && item.EventMainImage !== null ? (
                 <Image
                   resizeMode="stretch"

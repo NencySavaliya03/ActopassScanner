@@ -48,7 +48,7 @@ export default function CustomDrawerContent(props) {
   const handleSignOut = async () => {
     try {
       await AsyncStorage.clear();
-      navigation.navigate("Register");
+      navigation.navigate("AuthorizedStack");
     } catch (error) {
       console.error("Error clearing AsyncStorage:", error);
     }
@@ -56,7 +56,6 @@ export default function CustomDrawerContent(props) {
 
   const confirmSignOut = () => {
     setShowSignOutConfirmation(true);
-    navigation.navigate('AuthorizedStack');
   };
 
   const cancelSignOut = () => {

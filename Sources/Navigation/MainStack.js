@@ -36,7 +36,6 @@ export default function MainStack() {
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="History" component={HistoryScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="MainStack" component={MainStack} />
             <Stack.Screen name="AuthorizedStack" component={AuthorizedStack} />
           </Stack.Navigator>
         );
