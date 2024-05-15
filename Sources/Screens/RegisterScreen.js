@@ -125,7 +125,7 @@ const RegisterScreen = ({ navigation }) => {
                           placeholderTextColor={'#b3b3b3'}
                           onFocus={() => setIsPasswordFocused(true)}
                           onBlur={() => setIsPasswordFocused(false)}
-                          secureTextEntry={true}
+                          secureTextEntry={!showPassword}
                           onChangeText={value => { setPassword(value) }}
                           getRef={(e) => {
                             this.textInput.focus = e;

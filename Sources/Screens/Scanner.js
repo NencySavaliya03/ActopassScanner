@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, Appearance, SafeAreaView, Animated, Modal, ScrollView, Easing,} from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, Appearance, SafeAreaView, Animated, Modal, ScrollView, Easing, PanResponder,} from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Camera } from "expo-camera";
 import * as Font from "expo-font";
@@ -8,10 +8,16 @@ import {
 } from "react-native-responsive-screen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Entypo } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "react-native";
+import { CameraView, useCameraPermissions } from 'expo-camera/next';
+import { useDispatch, useSelector } from "react-redux";
+import { SET_SCANDATA } from "../../redux/Login/loginSlice";
 
 export default function Scanner() {
+  const dispatch = useDispatch();
+  const scannedData = useSelector((state) => state.loginData.scanData);
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [scanData, setScanData] = useState(null);
@@ -24,6 +30,7 @@ export default function Scanner() {
   const [success, setSuccess] = useState(false);
   const [warning, setWarning] = useState(false);
   const modalAnimation = useRef(new Animated.Value(hp("100%"))).current;
+
   const cameraRef = useRef(null);
 
   async function loadFonts() {
@@ -51,13 +58,13 @@ export default function Scanner() {
     };
     getCameraPermissions();
   }, []);
-
+  
   useEffect(() => {
     const hideMessageTimeout = setTimeout(() => {
       setWarningMessage("");
       setSuccess(false);
       setWarning(false);
-    }, 7000);
+    }, 5000);
 
     return () => clearTimeout(hideMessageTimeout);
   }, [warningMessage, success, warning]);
@@ -87,6 +94,7 @@ export default function Scanner() {
         }
       } else {
         const scannedData = await response.json();
+        dispatch(SET_SCANDATA(scannedData))
         await AsyncStorage.setItem("scannedData", JSON.stringify(scannedData));
         fetchData();
         setShowModal(true);
@@ -112,8 +120,7 @@ export default function Scanner() {
       const scannedDataJSON = await AsyncStorage.getItem("scannedData");
       if (scannedDataJSON) {
         const scannedData = JSON.parse(scannedDataJSON);
-        const count =
-          scannedData.TotalBookTicket - scannedData.TotalShareTicket;
+        const count = scannedData.TotalBookTicket - scannedData.TotalShareTicket;
         const initialPersons = Array(count).fill({ checked: false });
         setPersons(initialPersons);
         const scannedTicket = scannedData.TotalSacnnerTicketQty;
@@ -199,13 +206,24 @@ export default function Scanner() {
 
   // Modal Animation
   const showModal = () => {
+    setShowModal(true);
     Animated.timing(modalAnimation, {
       toValue: 0,
-      duration: 2000,
+      duration: 1000,
       easing: Easing.linear,
       useNativeDriver: true,
     }).start();
+  };  
+  
+  const hideModal = () => {
+    Animated.timing(modalAnimation, {
+      toValue: hp("100%"),
+      duration: 1000,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    }).start(() => setShowModal(false));
   };
+  
 
   const CustomCheckbox = ({ checked }) => (
     <View style={{ backgroundColor: checked   ? "#942FFA"   : colorScheme === "dark"   ? "#888888"   : "#D8D8D8", height: 25, width: 25, justifyContent: "center", alignItems: "center", borderRadius: 10, }} >
@@ -273,12 +291,14 @@ export default function Scanner() {
 
       {/* Camera View */}
       <View style={styles(colorScheme).scannerCamera}>
-        <Camera
-          type={Camera.Constants.Type.back}
-          onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          ref={cameraRef}
-          style={{ flex: 1 }}
-        />
+      <CameraView
+        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        barcodeScannerSettings={{
+          barcodeTypes: ["qr", "pdf417"],
+        }}
+        ref={cameraRef}
+        style={{ flex: 1 }}
+      />
       </View>
 
       {/* Modal Component */}
@@ -302,6 +322,25 @@ export default function Scanner() {
                 borderRadius: 10,
               }}
             >
+              <View style={{height: 60,flexDirection: 'row',justifyContent: 'space-between'}}>
+                <View style={{paddingLeft: 20,gap: 10}}>
+                  <View style={{}}>
+                    <Text style={{color: colorScheme === "dark" ? "#CCCCCC" : "#000000",fontSize: 22,fontFamily: "Montserrat-Medium",}}>{scannedData.TicketType} - {persons.length} Tickets</Text>
+                  </View>
+                  <View style={{width: '90%'}}>
+                    <Text numberOfLines={1} style={{color: colorScheme === "dark" ? "#CCCCCC" : "#000000",fontFamily: "Montserrat-Medium",fontSize: 16}}> you'll enjoy {scannedData.TicketType} perks and benefits that will elevate your event experience to new heights.</Text>
+                  </View>
+                </View>
+                <View>
+                  <AntDesign
+                    name="closecircle"
+                    size={25}
+                    color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
+                    style={{alignSelf: 'flex-end'}}
+                    onPress={() => hideModal()}
+                  />
+                </View>
+              </View>
               <ScrollView
                 style={styles(colorScheme).subContainer}
                 showsVerticalScrollIndicator={false}

@@ -3,7 +3,8 @@ import { createSlice } from '@reduxjs/toolkit'
 const initialState = {
     isLoggedIn: false,
     userData: {},
-    historyData: {}
+    historyData: {},
+    scanData: {}
   };
 
 export const loginSlice = createSlice({
@@ -26,10 +27,13 @@ export const loginSlice = createSlice({
         },
         SET_HISTORYDATA: (state, action) => {
           state.historyData = action.payload;
-      },
+        },
+        SET_SCANDATA: (state, action) => {
+          state.scanData = action.payload;
+        },
     }
 })
 
-export const { LOGIN_SUCCESS, LOGIN_FAILURE, SET_USERDATA, SET_HISTORYDATA } = loginSlice.actions
+export const { LOGIN_SUCCESS, LOGIN_FAILURE, SET_USERDATA, SET_HISTORYDATA, SET_SCANDATA } = loginSlice.actions
 
 export default loginSlice.reducer

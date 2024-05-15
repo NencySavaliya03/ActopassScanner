@@ -29,14 +29,15 @@ export default function MainStack() {
   }, []);
 
 
-    const MainStack = () => {
+    const MainStackView = () => {
         return (
-          <Stack.Navigator initialRouteName="Scanner" screenOptions={{ headerShown: false }}>
+          <Stack.Navigator initialRouteName="AuthorizedStack" screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="AuthorizedStack" component={AuthorizedStack} />
             <Stack.Screen name="Scanner" component={Scanner} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="History" component={HistoryScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="AuthorizedStack" component={AuthorizedStack} />
+            <Stack.Screen name="MainStack" component={MainStack} />
           </Stack.Navigator>
         );
       };
@@ -73,7 +74,7 @@ export default function MainStack() {
             )
           }}
         />
-        <Drawer.Screen name=" " component={MainStack}  />
+        <Drawer.Screen name="MainStackView" component={MainStackView} options={{ drawerLabel: () => null }}  />
       </Drawer.Navigator>
     );
 }

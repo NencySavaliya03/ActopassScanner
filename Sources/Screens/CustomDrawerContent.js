@@ -14,11 +14,11 @@ import {
 } from "@react-navigation/drawer";
 import { Avatar } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import * as Font from "expo-font";
 import { useDispatch, useSelector } from "react-redux";
 import { SET_USERDATA } from "../../redux/Login/loginSlice";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function CustomDrawerContent(props) {
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
@@ -48,12 +48,12 @@ export default function CustomDrawerContent(props) {
   const handleSignOut = async () => {
     try {
       await AsyncStorage.clear();
-      navigation.navigate("AuthorizedStack");
+      navigation.navigate("MainStackView"); 
     } catch (error) {
       console.error("Error clearing AsyncStorage:", error);
     }
   };
-
+  
   const confirmSignOut = () => {
     setShowSignOutConfirmation(true);
   };
@@ -86,6 +86,7 @@ export default function CustomDrawerContent(props) {
           throw new Error("Failed to fetch profile data");
         }
         const profileData = await response.json();
+        console.log('profileData:', profileData[0].PhotoPath);
         dispatch(SET_USERDATA(profileData[0]));
         await AsyncStorage.setItem("profileData", JSON.stringify(profileData));
       } catch (error) {
@@ -117,7 +118,7 @@ export default function CustomDrawerContent(props) {
               size={80}
               rounded
               containerStyle={{ backgroundColor: "#ffffff" }}
-              source={{ uri: userData?.PhotoPath }}
+              source={{ uri: userData.PhotoPath }}
             />
           </TouchableOpacity>
           <Text style={styles(colorScheme).profileText}>{userData?.Name}</Text>
