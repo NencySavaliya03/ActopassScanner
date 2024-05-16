@@ -104,8 +104,8 @@ export default function HistoryScreen({ }) {
             </View>
           ))
         ) : (
-            <Text style={[styles(colorScheme).titleText, { fontSize: 16, alignSelf: 'center' }]}>No event found !</Text>
-          )}
+          <Text style={[styles(colorScheme).titleText, { fontSize: 16, alignSelf: 'center' }]}>No event found !</Text>
+        )}
       </ScrollView>
     </View>
   );

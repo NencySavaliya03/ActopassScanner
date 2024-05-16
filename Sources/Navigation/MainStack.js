@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Octicons } from '@expo/vector-icons';
 import { Appearance } from 'react-native';
 import AuthorizedStack from './AuthorizedStack';
+import SingleHistoryScreen from '../Screens/SingleHistoryScreen';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -68,6 +69,13 @@ export default function MainStack() {
           }}
         />
         <Drawer.Screen name="History" component={HistoryScreen}
+          options={{
+            drawerIcon: ({ color }) => (
+              <Octicons name='history' size={25} color={color} />
+            )
+          }}
+        />
+         <Drawer.Screen name="TicketHistory" component={SingleHistoryScreen}
           options={{
             drawerIcon: ({ color }) => (
               <Octicons name='history' size={25} color={color} />

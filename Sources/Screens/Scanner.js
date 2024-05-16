@@ -2,16 +2,13 @@ import { Text, View, StyleSheet, TouchableOpacity, Appearance, SafeAreaView, Ani
 import React, { useEffect, useRef, useState } from "react";
 import { Camera } from "expo-camera";
 import * as Font from "expo-font";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp,} from "react-native-responsive-screen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Entypo } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "react-native";
-import { CameraView, useCameraPermissions } from 'expo-camera/next';
+import { CameraView } from 'expo-camera/next';
 import { useDispatch, useSelector } from "react-redux";
 import { SET_SCANDATA } from "../../redux/Login/loginSlice";
 
@@ -65,7 +62,6 @@ export default function Scanner() {
       setSuccess(false);
       setWarning(false);
     }, 5000);
-
     return () => clearTimeout(hideMessageTimeout);
   }, [warningMessage, success, warning]);
 
@@ -94,6 +90,7 @@ export default function Scanner() {
         }
       } else {
         const scannedData = await response.json();
+        console.log('scannedData: ',scannedData);
         dispatch(SET_SCANDATA(scannedData))
         await AsyncStorage.setItem("scannedData", JSON.stringify(scannedData));
         fetchData();
@@ -189,6 +186,7 @@ export default function Scanner() {
         throw new Error(`Failed to fetch data`);
       }
       const responseBody = await response.json();
+      console.log('responseBody: ',responseBody);
       setShowModal(false);
       if (responseBody.ResponseCode === 0) {
         setSuccess(true);

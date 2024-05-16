@@ -86,7 +86,6 @@ export default function CustomDrawerContent(props) {
           throw new Error("Failed to fetch profile data");
         }
         const profileData = await response.json();
-        console.log('profileData:', profileData[0].PhotoPath);
         dispatch(SET_USERDATA(profileData[0]));
         await AsyncStorage.setItem("profileData", JSON.stringify(profileData));
       } catch (error) {

@@ -4,6 +4,7 @@ const initialState = {
     isLoggedIn: false,
     userData: {},
     historyData: {},
+    s_historyData: {},
     scanData: {}
   };
 
@@ -28,12 +29,15 @@ export const loginSlice = createSlice({
         SET_HISTORYDATA: (state, action) => {
           state.historyData = action.payload;
         },
+        SET_SINGLE_HISTORYDATA: (state, action) => {
+          state.s_historyData = action.payload;
+        },
         SET_SCANDATA: (state, action) => {
           state.scanData = action.payload;
         },
     }
 })
 
-export const { LOGIN_SUCCESS, LOGIN_FAILURE, SET_USERDATA, SET_HISTORYDATA, SET_SCANDATA } = loginSlice.actions
+export const { LOGIN_SUCCESS, LOGIN_FAILURE, SET_USERDATA, SET_HISTORYDATA, SET_SINGLE_HISTORYDATA, SET_SCANDATA } = loginSlice.actions
 
 export default loginSlice.reducer
