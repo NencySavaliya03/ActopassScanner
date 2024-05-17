@@ -1,6 +1,5 @@
 import React from 'react';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const TicketSkeleton = () => (
   <SkeletonPlaceholder>

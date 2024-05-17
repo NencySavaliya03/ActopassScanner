@@ -5,6 +5,7 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-nat
 import { useDispatch, useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SET_HISTORYDATA } from "../../redux/Login/loginSlice";
+import ShimmerLoader from '../Screens/Skeleton';
 
 export default function HistoryScreen({ }) {
   const dispatch = useDispatch();
@@ -57,25 +58,17 @@ export default function HistoryScreen({ }) {
         const historyData = await response.json();
         dispatch(SET_HISTORYDATA(historyData));
         await AsyncStorage.setItem("historyData", JSON.stringify(historyData));
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching history data:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={styles(colorScheme).loadingContainer}>
-        <ActivityIndicator size="large" color={colorScheme === "dark" ? "#FFFFFF" : "#000000"} />
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles(colorScheme).container}>
-      <Text style={styles(colorScheme).titleText}>History</Text>
+  const handleHistory = () => {
+    return(
       <ScrollView>
         {Array.isArray(historyData) && historyData.length > 0 ? (
           historyData.map((item, index) => (
@@ -107,6 +100,18 @@ export default function HistoryScreen({ }) {
           <Text style={[styles(colorScheme).titleText, { fontSize: 16, alignSelf: 'center' }]}>No event found !</Text>
         )}
       </ScrollView>
+    )
+  }
+
+  return (
+    <View style={styles(colorScheme).container}>
+      <Text style={styles(colorScheme).titleText}>History</Text>
+      {loading ?  (
+        <View>
+        <ShimmerLoader style={{ width: '90%', height: 160, borderRadius: 20, marginBottom: 10 }} />
+        <ShimmerLoader style={{ width: '90%', height: 160, borderRadius: 20, marginBottom: 10 }} />
+      </View>
+      ) :( handleHistory())}
     </View>
   );
 }
@@ -115,7 +120,7 @@ const styles = (colorScheme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      justifyContent: "center",
+      // justifyContent: "center",
       backgroundColor: colorScheme === "dark" ? "#000000" : "#FFFFFF",
       paddingTop: 40,
     },

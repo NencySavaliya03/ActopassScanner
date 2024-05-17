@@ -61,7 +61,7 @@ export default function Scanner() {
       setWarningMessage("");
       setSuccess(false);
       setWarning(false);
-    }, 5000);
+    }, 3000);
     return () => clearTimeout(hideMessageTimeout);
   }, [warningMessage, success, warning]);
 
@@ -313,7 +313,7 @@ export default function Scanner() {
           >
             <View
               style={{
-                backgroundColor: colorScheme === "dark" ? "#262626" : "#FFFFFF",
+                backgroundColor: colorScheme === "dark" ? "#262626" : "#F2F2F2",
                 padding: 15,
                 width: "95%",
                 height: "75%",
@@ -437,7 +437,7 @@ const styles = (colorScheme) =>
 
     // after modal
     subContainer: {
-      backgroundColor: colorScheme === "dark" ? "#333333" : "#EEEEEE",
+      backgroundColor: colorScheme === "dark" ? "#333333" : "#e6e6e6",
       borderRadius: 10,
       borderLeftWidth: 3,
       borderLeftColor: "#9938fa",
