@@ -75,7 +75,7 @@ export default function SingleHistoryScreen() {
         </View>
       </View>
       
-      <View style={{ borderWidth: 1, borderColor: '#E2E2E2', marginVertical: 20 }} />
+      <View style={{ borderWidth: 1, borderColor: colorScheme === "dark" ? "#888888" : "#E2E2E2", marginVertical: 20 }} />
       
       {s_historyData.SubDetails.map((detail, index) => (
         <View key={detail.BookTicketDeatilsid}>
@@ -85,8 +85,8 @@ export default function SingleHistoryScreen() {
               <Text style={[styles(colorScheme).ticketData, { fontSize: 30, color: colorScheme === "dark" ? "#FFFFFF" : "#000000" }]}>{detail.TicketType}</Text>
               <Text style={styles(colorScheme).ticketData}>{`Available Ticket-Qty :   ${detail.AvailableTicketQty - detail.SacnneTicketQty}`}</Text>
             </View>
-            <View style={{ backgroundColor: colorScheme === "dark" ? "#888888" : "#E2E2E2", padding: 20, borderRadius: 10, justifyContent: 'center' }}>
-              <Text style={[styles(colorScheme).ticketData, { fontSize: 16, color: detail.Expired === "Yes" ? 'red' : 'green' }]}>{detail.Expired === "Yes" ? "Expired" : "Active"}</Text>
+            <View style={{ backgroundColor: colorScheme === "dark" ? "#666666" : "#E2E2E2", padding: 20, borderRadius: 10, justifyContent: 'center' }}>
+              <Text style={[styles(colorScheme).ticketData, { fontSize: 16, color: detail.Expired === "Yes" ? '#ff3333' : 'green' }]}>{detail.Expired === "Yes" ? "Expired" : "Active"}</Text>
             </View>
           </View>
           
@@ -205,7 +205,7 @@ const styles = (colorScheme) => StyleSheet.create({
     color: colorScheme === "dark" ? "#888888" : "#464646",
   },
   scannedTicketQty: {
-    backgroundColor: colorScheme === "dark" ? "#888888" : "#E2E2E2",
+    backgroundColor: colorScheme === "dark" ? "#666666" : "#E2E2E2",
     flexDirection: 'row',
     paddingVertical: 15,
     paddingHorizontal: 20,
