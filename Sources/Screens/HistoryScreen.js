@@ -151,6 +151,6 @@ const styles = (colorScheme) =>
     contentText: {
       fontSize: 16,
       fontFamily: "Montserrat-SemiBold",
-      color: colorScheme === "dark" ? "#EEEEEE" : "#5A5A5A",
+      color: colorScheme === "dark" ? "#cccccc" : "#5A5A5A",
     },
   });
