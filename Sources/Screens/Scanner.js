@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, Appearance, SafeAreaView, Animated, Modal, ScrollView, Easing, PanResponder,} from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, Appearance, SafeAreaView, Animated, Modal, ScrollView, Easing, PanResponder, TouchableWithoutFeedback,} from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Camera } from "expo-camera";
 import * as Font from "expo-font";
@@ -6,6 +6,8 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp,} from "react-nat
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Entypo } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "react-native";
 import { CameraView } from 'expo-camera/next';
@@ -27,7 +29,15 @@ export default function Scanner() {
   const [success, setSuccess] = useState(false);
   const [warning, setWarning] = useState(false);
   const modalAnimation = useRef(new Animated.Value(hp("100%"))).current;
-
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: "John Doe",
+    email: "johndoe@example.com",
+    mobile: "1234567890",
+    profilephoto: "https://example.com/profilephoto.jpg",
+  });
+  const profileModalAnimation = useRef(new Animated.Value(hp("100%"))).current;
+  
   const cameraRef = useRef(null);
 
   async function loadFonts() {
@@ -67,7 +77,10 @@ export default function Scanner() {
 
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
+    data = 'hello world';
     setScanData(data);
+    console.log(data);
+    
     const storedDataJSON = await AsyncStorage.getItem("userData");
     const storedData = JSON.parse(storedDataJSON);
     try {
@@ -207,7 +220,7 @@ export default function Scanner() {
     setShowModal(true);
     Animated.timing(modalAnimation, {
       toValue: 0,
-      duration: 1000,
+      duration: 500,
       easing: Easing.linear,
       useNativeDriver: true,
     }).start();
@@ -216,13 +229,35 @@ export default function Scanner() {
   const hideModal = () => {
     Animated.timing(modalAnimation, {
       toValue: hp("100%"),
-      duration: 1000,
+      duration: 500,
       easing: Easing.linear,
       useNativeDriver: true,
     }).start(() => setShowModal(false));
   };
   
-
+  const handleprofileChange = () => {
+    showProfileModal();
+  };
+  
+  const showProfileModal = () => {
+    setProfileModalVisible(true);
+    Animated.timing(profileModalAnimation, {
+      toValue: 0,
+      duration: 1000,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  const hideProfileModal = () => {
+    Animated.timing(profileModalAnimation, {
+      toValue: hp("200%"),
+      duration: 1000,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }).start(() => setProfileModalVisible(false));
+  };
+  
   const CustomCheckbox = ({ checked }) => (
     <View style={{ backgroundColor: checked   ? "#942FFA"   : colorScheme === "dark"   ? "#888888"   : "#D8D8D8", height: 25, width: 25, justifyContent: "center", alignItems: "center", borderRadius: 10, }} >
       {checked && <Entypo name="check" size={15} color="#FFF" />}
@@ -379,6 +414,86 @@ export default function Scanner() {
         </Modal>
       )}
 
+      {profileModalVisible && (
+        <Modal transparent={true} visible={profileModalVisible} animationType="slide">
+          <TouchableWithoutFeedback onPress={hideProfileModal}>
+            <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.9)', justifyContent: 'flex-end' }}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <Animated.View
+                  style={{
+                    transform: [{ translateY: profileModalAnimation }],
+                    height: '30%',
+                    width: '90%',
+                    backgroundColor: colorScheme === 'dark' ? '#262626' : '#FFFFFF',
+                    padding: 20,
+                    margin: 20
+                  }}
+                >
+                  <TouchableOpacity onPress={hideProfileModal} style={{ alignItems: 'flex-end' }}>
+                    <AntDesign
+                      name="closecircle"
+                      size={20}
+                      color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
+                      onPress={hideProfileModal}
+                    />
+                  </TouchableOpacity>
+                  <Image source={require('../../images/profile1.jpg')} style={{height: 80,width: 80, borderRadius: 50,position: 'absolute',top: -40,left: 30,zIndex: 1}} />
+                  <View style={{ paddingLeft: '2%', gap: 15, marginTop: '10%' }}>
+                    <Text
+                      style={{
+                        color: colorScheme === 'dark' ? '#CCCCCC' : '#000000',
+                        fontSize: 26,
+                        fontFamily: 'Montserrat-SemiBold',
+                        // position: 'absolute',
+                        // left: 0,
+                      }}
+                    >
+                      {profileData.name}
+                    </Text>
+                    <View style={{flexDirection: 'row', gap: 20,marginTop: '2%'}}>
+                      <MaterialCommunityIcons
+                        name="email-variant"
+                        size={20}
+                        color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
+                        onPress={hideProfileModal}
+                      />
+                      <Text
+                        style={{
+                          color: colorScheme === 'dark' ? '#CCCCCC' : '#000000',
+                          fontSize: 16,
+                          fontFamily: 'Montserrat-Medium',
+                          
+                        }}
+                      >
+                      {profileData.email}
+                    </Text>
+                    </View>
+                    <View style={{flexDirection: 'row', gap: 20}}>
+                      <Ionicons
+                        name="call-outline"
+                        size={20}
+                        color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
+                        onPress={hideProfileModal}
+                      />
+                      <Text
+                        style={{
+                          color: colorScheme === 'dark' ? '#CCCCCC' : '#000000',
+                          fontSize: 16,
+                          fontFamily: 'Montserrat-Medium',
+                        }}
+                      >
+                      9090909090
+                    </Text>
+                    </View>
+                  </View>
+                  
+                </Animated.View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      )}
+
       {/* Scan Again */}
       <View style={{ flex: 1 }}>
         {scanned && (
@@ -389,6 +504,12 @@ export default function Scanner() {
             <Text style={styles(colorScheme).submitText}>Scan Again</Text>
           </TouchableOpacity>
         )}
+        <TouchableOpacity
+            style={styles(colorScheme).submitButton}
+            onPress={handleprofileChange}
+          >
+            <Text style={styles(colorScheme).submitText}>Profile</Text>
+          </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -476,5 +597,21 @@ const styles = (colorScheme) =>
       fontWeight: "bold",
       letterSpacing: 1,
       fontFamily: "Montserrat-SemiBold",
+    },
+    profileContainer: {
+      backgroundColor: colorScheme === "dark" ? "#262626" : "#FFFFFF",
+      padding: 20,
+      borderRadius: 10,
+      alignItems: "center",
+    },
+    profileText: {
+      fontSize: 18,
+      color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
+    },
+    profileImage: {
+      height: 100,
+      width: 100,
+      borderRadius: 50,
+      marginVertical: 20,
     },
   });

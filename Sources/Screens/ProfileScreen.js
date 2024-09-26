@@ -1,5 +1,4 @@
 import {
-  ImageBackground,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -14,7 +13,7 @@ import { Avatar } from "react-native-elements";
 import { Appearance } from "react-native";
 import * as Font from "expo-font";
 import { useSelector } from "react-redux";
-
+import { LinearGradient } from "expo-linear-gradient"; // Import LinearGradient
 
 export default function ProfileScreen() {
   const userData = useSelector((state) => state.loginData.userData);
@@ -40,9 +39,11 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles(colorScheme).container}>
-      <ImageBackground
-        style={styles(colorScheme).imageContainer}
-        source={require("../../images/backgroundImage.jpg")}
+      <LinearGradient
+        colors={["#8C87F1",  "#942FFA"]}  
+        style={styles(colorScheme).gradientContainer}
+        start={[1, 0]}  
+        end={[0, 0]}    
       >
         <KeyboardAvoidingView
           style={styles(colorScheme).keyboardAvoidingContainer}
@@ -82,7 +83,6 @@ export default function ProfileScreen() {
                       style={styles(colorScheme).inputIcons}
                     />
                     <Text style={styles(colorScheme).inputText}>
-                      {" "}
                       User Name{" "}
                     </Text>
                   </View>
@@ -97,7 +97,6 @@ export default function ProfileScreen() {
                       style={styles(colorScheme).inputIcons}
                     />
                     <Text style={styles(colorScheme).inputText}>
-                      {" "}
                       Email ID{" "}
                     </Text>
                   </View>
@@ -124,7 +123,7 @@ export default function ProfileScreen() {
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
-      </ImageBackground>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -139,7 +138,7 @@ const styles = (colorScheme) =>
       flex: 1,
       justifyContent: "flex-end",
     },
-    imageContainer: {
+    gradientContainer: {
       flex: 1,
       width: "100%",
       justifyContent: "flex-end",
@@ -177,8 +176,8 @@ const styles = (colorScheme) =>
       fontFamily: "Montserrat-SemiBold",
     },
     inputIcons: {
-      height: 25,
-      width: 25,
+      height: 20,
+      width: 20,
     },
     userInput: {
       borderBottomWidth: 1.5,

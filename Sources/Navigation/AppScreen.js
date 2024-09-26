@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function AppScreen() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true); 
-  global.DomainName = "https://actopassapi.actoscript.com";
+  global.DomainName = "https://actopassapidev.actoscript.com";
 
   useEffect(() => {
     const fetchData = async () => {
