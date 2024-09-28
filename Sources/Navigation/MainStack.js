@@ -9,6 +9,8 @@ import CustomDrawerContent from "../Screens/CustomDrawerContent";
 import { Appearance, Image } from "react-native";
 import AuthorizedStack from "./AuthorizedStack";
 import SingleHistoryScreen from "../Screens/SingleHistoryScreen";
+import InvitationScreen from "../Screens/InvitationScreen";
+import KhelaiyaHistory from "../Screens/KhelaiyaHistory";
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -35,6 +37,7 @@ export default function MainStack() {
         <Stack.Screen name="AuthorizedStack" component={AuthorizedStack} />
         <Stack.Screen name="Scanner" component={Scanner} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="InvitationScreen" component={InvitationScreen} />
         <Stack.Screen name="History" component={HistoryScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="MainStack" component={MainStack} />
@@ -58,7 +61,7 @@ export default function MainStack() {
       }}
     >
       <Drawer.Screen
-        name="Scanner"
+        name="Scanner "
         component={Scanner}
         options={{
           drawerIcon: ({ focused }) => (
@@ -76,7 +79,7 @@ export default function MainStack() {
         }}
       />
       <Drawer.Screen
-        name="Profile"
+        name="Profile "
         component={ProfileScreen}
         options={{
           drawerIcon: ({ focused }) => (
@@ -94,7 +97,7 @@ export default function MainStack() {
         }}
       />
       <Drawer.Screen
-        name="History"
+        name="History "
         component={HistoryScreen}
         options={{
           drawerIcon: ({ focused }) => (
@@ -112,7 +115,7 @@ export default function MainStack() {
         }}
       />
       <Drawer.Screen
-        name="TicketHistory"
+        name="TicketHistory "
         component={SingleHistoryScreen}
         options={{
           drawerIcon: ({ focused }) => (
@@ -123,6 +126,24 @@ export default function MainStack() {
                   : colorScheme === "dark"
                   ? require("../../images/invoice1.png")
                   : require("../../images/invoice.png")
+              }
+              style={{ height: 25, width: 25 }}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="KhelaiyaHistory"
+        component={KhelaiyaHistory}
+        options={{
+          drawerIcon: ({ focused }) => (
+            <Image
+              source={
+                focused
+                  ? require("../../images/time1.png")
+                  : colorScheme === "dark"
+                  ? require("../../images/time1.png")
+                  : require("../../images/time.png")
               }
               style={{ height: 25, width: 25 }}
             />

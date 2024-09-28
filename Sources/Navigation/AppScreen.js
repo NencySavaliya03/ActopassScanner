@@ -12,6 +12,7 @@ export default function AppScreen() {
     const fetchData = async () => {
       try {
         const Authorized = await AsyncStorage.getItem("userData");
+        
         if (Authorized) { 
           setIsAuthorized(true);
         }

@@ -6,6 +6,7 @@ import {
   Platform, 
   SafeAreaView, 
   ScrollView, 
+  StatusBar, 
   StyleSheet, 
   Text, 
   TextInput, 
@@ -18,6 +19,7 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Font from 'expo-font';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SET_USERDATA } from '../../redux/Login/loginSlice';
 
 const RegisterScreen = ({ navigation }) => { 
   const [email, setEmail] = useState('');
@@ -63,9 +65,9 @@ const RegisterScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch(`${global.DomainName}/api/Scanner`, { 
+      const response = await fetch(`${global.DomainName}/api/Scanner`, {
         method: 'POST',
-        headers: { 
+        headers: {
           "Accept": 'application/json',
           'Content-Type': 'application/json',
         },
@@ -74,25 +76,34 @@ const RegisterScreen = ({ navigation }) => {
           Password: password,
         })
       });
-      const userData = await response.json();
+  
+      if (!response.ok) {
+        console.error('Failed to login:', response.status);
+        setError(true);
+        return;
+      }
+      const userData = await response.json();  
       if (userData.Code === email && userData.Password === password) {
         await AsyncStorage.setItem('userData', JSON.stringify(userData));
+        const userdata = await AsyncStorage.getItem('userData');
+        // dispatch(SET_USERDATA(userdata))
         navigation.navigate('MainStack');
       } else {
         setError(true);
         console.error('Invalid username or password');
       }
-      setEmail('');
+       setEmail('');
       setPassword('');
       setError('');
-      return userData;
     } catch (error) {
-      console.error(error);
+      console.error('Error during login:', error);
     }
   };
+  
 
   return (
     <SafeAreaView style={styles(colorScheme).container}>
+      <StatusBar hidden={true} />
       <LinearGradient
          colors={["#8C87F1",  "#942FFA"]}  
          style={styles(colorScheme).linearGradient}
@@ -156,7 +167,7 @@ const RegisterScreen = ({ navigation }) => {
                   </View>
 
                   <View style={{flex: .5}}>
-                    {isError === true ? <Text style={styles(colorScheme).errorText}>Invalid username or password</Text> : null}
+                    {isError === true ? <Text style={styles(colorScheme).errorText}>Invalid username or password{" "}</Text> : null}
                   </View>
                 </View>
               </ScrollView>
@@ -164,7 +175,7 @@ const RegisterScreen = ({ navigation }) => {
 
             <View style={styles(colorScheme).submitData}>
               <TouchableOpacity style={styles(colorScheme).submitButton} onPress={handleLogin}>
-                <Text style={styles(colorScheme).submitText}>Login</Text>
+                <Text style={styles(colorScheme).submitText}>Login{" "}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -206,7 +217,7 @@ const styles = (colorScheme) => StyleSheet.create({
   },
   text: {
     width: '100%',
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: 'Montserrat-SemiBold',
     color: colorScheme === 'dark' ? '#FFF' : '#000',
     textAlign: 'center',

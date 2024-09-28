@@ -13,7 +13,7 @@ import { Avatar } from "react-native-elements";
 import { Appearance } from "react-native";
 import * as Font from "expo-font";
 import { useSelector } from "react-redux";
-import { LinearGradient } from "expo-linear-gradient"; // Import LinearGradient
+import { LinearGradient } from "expo-linear-gradient"; 
 
 export default function ProfileScreen() {
   const userData = useSelector((state) => state.loginData.userData);
