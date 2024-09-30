@@ -13,6 +13,7 @@ import {
   TouchableWithoutFeedback,
   TextInput,
   Alert,
+  StatusBar,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Camera } from "expo-camera";
@@ -146,6 +147,11 @@ export default function Scanner() {
           setEmail("");
           const responseBody = await response.json();
           setWarning(responseBody.ResponseMessage);
+        } else {
+          console.log(JSON.stringify(response, null, 2), response.ok);
+          setEmail("");
+          const responseBody = await response.json();
+          setWarning(responseBody.ResponseMessage || "Data not exist");
         }
       } else {
         const scannedData = await response.json();
@@ -261,6 +267,7 @@ export default function Scanner() {
       if (responseBody.ResponseCode === 0) {
         setSuccess(true);
       }
+
       return responseBody;
     } catch (error) {
       console.error("Error fetching or parsing data:", error);
@@ -297,13 +304,15 @@ export default function Scanner() {
   };
 
   const hideProfileModal = () => {
-    Animated.timing(profileModalAnimation, {
-      toValue: 0,
-      duration: 500,
-      easing: Easing.in(Easing.ease),
-      useNativeDriver: true,
-    }).start(() => setProfileModalVisible(false));
+    // Animated.timing(profileModalAnimation, {
+    //   toValue: 0,
+    //   duration: 500,
+    //   easing: Easing.in(Easing.ease),
+    //   useNativeDriver: true,
+    // }).start(() => setProfileModalVisible(false));
   };
+
+  console.log("profileModal", profileData);
 
   const CustomCheckbox = ({ checked }) => (
     <View
@@ -533,11 +542,10 @@ export default function Scanner() {
       )}
 
       {profileModalVisible && (
-        <Modal
-          transparent={true}
-          visible={profileModalVisible}
-          animationType="slide"
-        >
+        <Modal transparent={true} visible={true} animationType="slide">
+          <StatusBar
+            backgroundColor={colorScheme === "dark" ? "#000000" : "#CCCCCC"}
+          />
           <TouchableWithoutFeedback onPress={hideProfileModal}>
             {/* <View
               style={{
@@ -691,35 +699,49 @@ export default function Scanner() {
                   color={colorScheme === "dark" ? "#FFFFFF" : "#444444"}
                 />
               </TouchableOpacity>
+              <Text style={[styles(colorScheme).subtitle, { fontSize: 25 }]}>
+                ID: {profileData.RegistrationId}
+              </Text>
               <View style={styles(colorScheme).imageContainer}>
                 <Image
-                  source={{
-                    uri: profileData.profilephoto,
-                  }}
+                  source={
+                    profileData.profilephoto.length == 0
+                      ? require("../../images/profile.png ")
+                      : {
+                          uri: profileData.profilephoto,
+                        }
+                  }
                   style={styles(colorScheme).profileImage}
                 />
+
                 <View style={styles(colorScheme).ringContainer}>
                   <View style={styles(colorScheme).outerRing} />
                   <View style={styles(colorScheme).middleRing} />
                   <View style={styles(colorScheme).innering} />
                 </View>
               </View>
-
               <View style={{ alignItems: "center", gap: hp(2) }}>
                 <Text style={styles(colorScheme).title}>
                   {profileData.group} - {profileData.KhelaiyaGroupType}
                 </Text>
                 <View style={{ alignItems: "center", gap: hp(0.5) }}>
-                  <Text style={styles(colorScheme).subtitle}>
+                  <Text style={styles(colorScheme).nameText}>
                     {profileData.name}{" "}
-                  </Text>
-                  <Text
-                    style={[styles(colorScheme).subtitle, { fontSize: 14 }]}
-                  >
-                    RegistrationId: {profileData.RegistrationId}
                   </Text>
                 </View>
               </View>
+
+              <Image
+                source={
+                  profileData.profilephoto.length == 0
+                    ? require("../../images/ActoscriptLogo.png")
+                    : {
+                        uri: profileData.profilephoto,
+                      }
+                }
+                resizeMode="contain"
+                style={styles(colorScheme).logoImage}
+              />
             </View>
           </TouchableWithoutFeedback>
         </Modal>
@@ -835,9 +857,16 @@ const styles = (colorScheme) =>
       marginVertical: 20,
     },
 
+    logoImage: {
+      height: wp(50),
+      width: wp(50),
+      position: "absolute",
+      bottom: -hp(2),
+    },
+
     modalContents: {
       flex: 1,
-      backgroundColor: colorScheme === "dark" ? "#333333" : "#FFFFFF",
+      backgroundColor: colorScheme === "dark" ? "#000000" : "#FFFFFF",
       justifyContent: "center",
       alignItems: "center",
       padding: 20,
@@ -849,13 +878,21 @@ const styles = (colorScheme) =>
       color: colorScheme === "dark" ? "#CCCCCC" : "#000000",
     },
     subtitle: {
-      fontFamily: "Montserrat-SemiBold",
-      fontSize: 18,
-      color: colorScheme === "dark" ? "#CCCCCC" : "#444",
+      fontFamily: "Montserrat-Bold",
+      fontSize: 28,
+      color: colorScheme === "dark" ? "red" : "red",
+      marginBottom: hp(5),
+    },
+    nameText: {
+      fontFamily: "Montserrat-Semibold",
+      fontSize: 25,
+      color: colorScheme === "dark" ? "#CCCCCC" : "#000000",
+      marginBottom: hp(5),
     },
     imageContainer: {
-      position: "relative",
       marginBottom: 20,
+      alignItems: "center",
+      justifyContent: "center",
     },
     profileImage: {
       width: wp(40),
