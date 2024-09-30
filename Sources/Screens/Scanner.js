@@ -15,7 +15,7 @@ import {
   Alert,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-
+import { Camera } from "expo-camera";
 import * as Font from "expo-font";
 import {
   widthPercentageToDP as wp,
@@ -31,7 +31,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { SET_SCANDATA } from "../../redux/Login/loginSlice";
-import { CameraView } from "expo-camera";
+import CameraView from "expo-camera";
 
 export default function Scanner() {
   const dispatch = useDispatch();
@@ -386,7 +386,7 @@ export default function Scanner() {
         }}
       >
         <View style={styles(colorScheme).scannerCamera}>
-          <CameraView
+          <Camera
             onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
             barcodeScannerSettings={{
               barcodeTypes: ["qr", "pdf417"],

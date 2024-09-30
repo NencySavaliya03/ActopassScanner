@@ -15,7 +15,7 @@ import {
   Alert,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-import { Camera } from "expo-camera";
+import { Camera, CameraView } from "expo-camera";
 import * as Font from "expo-font";
 import {
   widthPercentageToDP as wp,
@@ -31,7 +31,7 @@ import { Image } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { SET_SCANDATA } from "../../redux/Login/loginSlice";
 
-export default function Scanner() {
+export default function ScannerCopy() {
   const dispatch = useDispatch();
   const scannedData = useSelector((state) => state.loginData.scanData);
   const [hasPermission, setHasPermission] = useState(null);
@@ -76,13 +76,13 @@ export default function Scanner() {
     };
   }, []);
 
-  // useEffect(() => {
-  //   const getCameraPermissions = async () => {
-  //     const { status } = await Camera.requestCameraPermissionsAsync();
-  //     setHasPermission(status === "granted");
-  //   };
-  //   getCameraPermissions();
-  // }, []);
+  useEffect(() => {
+    const getCameraPermissions = async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+    };
+    getCameraPermissions();
+  }, []);
 
   useEffect(() => {
     const hideMessageTimeout = setTimeout(() => {
@@ -389,16 +389,16 @@ export default function Scanner() {
       </View>
 
       {/* Camera View */}
-      {/* <View style={styles(colorScheme).scannerCamera}>
-      <CameraView
-        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-        barcodeScannerSettings={{
-          barcodeTypes: ["qr", "pdf417"],
-        }}
-        ref={cameraRef}
-        style={{ flex: 1 }}
-      />
-      </View> */}
+      <View style={styles(colorScheme).scannerCamera}>
+        <CameraView
+          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+          barcodeScannerSettings={{
+            barcodeTypes: ["qr", "pdf417"],
+          }}
+          ref={cameraRef}
+          style={{ flex: 1 }}
+        />
+      </View>
 
       <View
         style={{

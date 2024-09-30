@@ -49,7 +49,17 @@ export default function MainStack() {
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
+        headerStyle: {
+          borderWidth: 0,
+          borderColor: "transparent",
+          backgroundColor: colorScheme === "dark" ? "#000" : "#fff",
+        },
+        headerTintColor: colorScheme === "dark" ? "#fff" : "#000",
+        headerTitleStyle: {
+          color: "transparent",
+        },
+        headerBackgroundColor: "transparent",
         drawerLabelStyle: {
           marginLeft: -15,
           fontSize: 16,
