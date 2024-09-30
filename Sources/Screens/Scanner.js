@@ -15,7 +15,7 @@ import {
   Alert,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-import { Camera } from "expo-camera";
+
 import * as Font from "expo-font";
 import {
   widthPercentageToDP as wp,
@@ -31,6 +31,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { SET_SCANDATA } from "../../redux/Login/loginSlice";
+import { CameraView } from "expo-camera";
 
 export default function Scanner() {
   const dispatch = useDispatch();
@@ -57,6 +58,8 @@ export default function Scanner() {
       "Montserrat-Medium": require("../../assets/fonts/Montserrat-Medium.ttf"),
     });
   }
+
+  const cameraRef = useRef(null);
   loadFonts();
 
   useEffect(() => {
@@ -76,6 +79,45 @@ export default function Scanner() {
     }, 1000);
     return () => clearTimeout(hideMessageTimeout);
   }, [success, warning]);
+
+  const handleBarCodeScanned = async ({ type, data }) => {
+    setScanned(true);
+    setScanData(data);
+
+    const storedDataJSON = await AsyncStorage.getItem("userData");
+    const storedData = JSON.parse(storedDataJSON);
+    try {
+      const response = await fetch(`${global.DomainName}/api/SacnneTicket`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + storedData.AuthorizationKey,
+        },
+        body: JSON.stringify({
+          QrCode: data,
+          ScannerLoginId: storedData.ScannerLoginId,
+        }),
+      });
+      if (!response.ok) {
+        if (response.status === 404) {
+          const responseBody = await response.json();
+          setWarning(responseBody.ResponseMessage);
+        }
+      } else {
+        const scannedData = await response.json();
+        console.log("scannedData: ", scannedData);
+        dispatch(SET_SCANDATA(scannedData));
+        await AsyncStorage.setItem("scannedData", JSON.stringify(scannedData));
+        fetchData();
+        setShowModal(true);
+        showModal();
+      }
+    } catch (error) {
+      setScanned(false);
+      console.error("Error:", error.message);
+    }
+  };
 
   const handleScanData = async () => {
     setSuccess("");
@@ -343,6 +385,16 @@ export default function Scanner() {
           gap: wp(3),
         }}
       >
+        <View style={styles(colorScheme).scannerCamera}>
+          <CameraView
+            onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+            barcodeScannerSettings={{
+              barcodeTypes: ["qr", "pdf417"],
+            }}
+            ref={cameraRef}
+            style={{ flex: 1 }}
+          />
+        </View>
         <TextInput
           style={[
             styles(colorScheme).inputContainer,
@@ -842,5 +894,11 @@ const styles = (colorScheme) =>
       borderRadius: wp(50),
       borderWidth: 2,
       borderColor: "rgba(128, 128, 128, 0.2)",
+    },
+    scannerCamera: {
+      flex: 1,
+      margin: 50,
+      overflow: "hidden",
+      borderRadius: 30,
     },
   });
