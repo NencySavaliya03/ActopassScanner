@@ -10,9 +10,8 @@ import {
   ScrollView,
   Easing,
   PanResponder,
-  TouchableWithoutFeedback,
   TextInput,
-  Alert,
+  FlatList,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Camera } from "expo-camera";
@@ -24,33 +23,43 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Entypo } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
-import { Ionicons } from "@expo/vector-icons";
-import { MaterialIcons } from "@expo/vector-icons";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "react-native";
+import { CameraView } from "expo-camera/next";
 import { useDispatch, useSelector } from "react-redux";
 import { SET_SCANDATA } from "../../redux/Login/loginSlice";
-import CameraView from "expo-camera";
 
-export default function Scanner() {
+export default function ScannerCopy() {
   const dispatch = useDispatch();
   const scannedData = useSelector((state) => state.loginData.scanData);
+  const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [scanData, setScanData] = useState(null);
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
+  const [warningMessage, setWarningMessage] = useState("");
   const [IsshowModal, setShowModal] = useState(false);
   const [persons, setPersons] = useState([]);
   const [totalScannerTicketQty, setTotalScannerTicketQty] = useState(0);
   const [scannedTicket, setScannedTicket] = useState(0);
-  const [success, setSuccess] = useState("");
-  const [warning, setWarning] = useState("");
-  const [isEmailFocused, setIsEmailFocused] = useState(false);
-  const [email, setEmail] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [warning, setWarning] = useState(false);
   const modalAnimation = useRef(new Animated.Value(hp("100%"))).current;
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [profileData, setProfileData] = useState({});
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [email, setEmail] = useState("");
+  const [category, setCategory] = useState("RFCode");
   const profileModalAnimation = useRef(new Animated.Value(hp("100%"))).current;
+
+  const cameraRef = useRef(null);
+
+  useEffect(() => {
+    const getCameraPermissions = async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+    };
+    getCameraPermissions();
+  }, []);
 
   async function loadFonts() {
     await Font.loadAsync({
@@ -58,8 +67,6 @@ export default function Scanner() {
       "Montserrat-Medium": require("../../assets/fonts/Montserrat-Medium.ttf"),
     });
   }
-
-  const cameraRef = useRef(null);
   loadFonts();
 
   useEffect(() => {
@@ -74,16 +81,44 @@ export default function Scanner() {
 
   useEffect(() => {
     const hideMessageTimeout = setTimeout(() => {
+      setWarningMessage("");
       setSuccess(false);
       setWarning(false);
-    }, 1000);
+    }, 3000);
     return () => clearTimeout(hideMessageTimeout);
-  }, [success, warning]);
+  }, [warningMessage, success, warning]);
+
+  const DATA = [
+    { id: "1", name: "Scan" },
+    { id: "2", name: "RFCode" },
+    { id: "3", name: "Manually" },
+  ];
+
+  const renderScanner = ({ item }) => (
+    <TouchableOpacity onPress={() => setCategory(item.name)}>
+      <View
+        style={[
+          styles(colorScheme).categoryItem,
+          {
+            backgroundColor: category == item.name ? "#942FFA" : "#eee",
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles(colorScheme).listTitle,
+            { color: category == item.name ? "#FFF" : "#000" },
+          ]}
+        >
+          {item.name}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     setScanData(data);
-
     const storedDataJSON = await AsyncStorage.getItem("userData");
     const storedData = JSON.parse(storedDataJSON);
     try {
@@ -102,7 +137,7 @@ export default function Scanner() {
       if (!response.ok) {
         if (response.status === 404) {
           const responseBody = await response.json();
-          setWarning(responseBody.ResponseMessage);
+          setWarningMessage(responseBody.ResponseMessage);
         }
       } else {
         const scannedData = await response.json();
@@ -116,6 +151,71 @@ export default function Scanner() {
     } catch (error) {
       setScanned(false);
       console.error("Error:", error.message);
+    }
+  };
+
+  const fetchData = async () => {
+    try {
+      const scannedDataJSON = await AsyncStorage.getItem("scannedData");
+      if (scannedDataJSON) {
+        const scannedData = JSON.parse(scannedDataJSON);
+        const count =
+          scannedData.TotalBookTicket - scannedData.TotalShareTicket;
+        const initialPersons = Array(count).fill({ checked: false });
+        setPersons(initialPersons);
+        const scannedTicket = scannedData.TotalSacnnerTicketQty;
+        setScannedTicket(scannedTicket);
+        const updatedPersons = initialPersons.map((person, index) => {
+          return { ...person, checked: index < scannedTicket };
+        });
+        setPersons(updatedPersons);
+      } else {
+        console.log("No scanned data found");
+      }
+    } catch (error) {
+      console.error("Error fetching scanned data:", error);
+    }
+  };
+
+  const handleProceedData = async () => {
+    const scannedDataJSON = await AsyncStorage.getItem("scannedData");
+    const scannedData = JSON.parse(scannedDataJSON);
+    const storedDataJSON = await AsyncStorage.getItem("userData");
+    const storedData = JSON.parse(storedDataJSON);
+    try {
+      console.log("book ticket", scannedData);
+      console.log("totalScannerTicketQty", totalScannerTicketQty);
+      const response = await fetch(
+        `${global.DomainName}/api/SacnneTicket/confirm-ticket`,
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + storedData.AuthorizationKey,
+          },
+          body: JSON.stringify({
+            BookTicketDeatils: scannedData.BookTicketDeatils,
+            ScannerLoginId: storedData.ScannerLoginId,
+            TotalSacnnerTicketQty: totalScannerTicketQty,
+          }),
+        }
+      );
+      if (!response.ok) {
+        if (responseBody.ResponseCode === 0) {
+          setWarning(true);
+        }
+        throw new Error(`Failed to fetch data`);
+      }
+      const responseBody = await response.json();
+      console.log("responseBody: ", responseBody);
+      setShowModal(false);
+      if (responseBody.ResponseCode === 0) {
+        setSuccess(true);
+      }
+      return responseBody;
+    } catch (error) {
+      console.error("Error fetching or parsing data:", error);
     }
   };
 
@@ -181,27 +281,23 @@ export default function Scanner() {
     }
   };
 
-  const fetchData = async () => {
-    try {
-      const scannedDataJSON = await AsyncStorage.getItem("scannedData");
-      if (scannedDataJSON) {
-        const scannedData = JSON.parse(scannedDataJSON);
-        const count =
-          scannedData.TotalBookTicket - scannedData.TotalShareTicket;
-        const initialPersons = Array(count).fill({ checked: false });
-        setPersons(initialPersons);
-        const scannedTicket = scannedData.TotalSacnnerTicketQty;
-        setScannedTicket(scannedTicket);
-        const updatedPersons = initialPersons.map((person, index) => {
-          return { ...person, checked: index < scannedTicket };
-        });
-        setPersons(updatedPersons);
-      } else {
-        console.log("No scanned data found");
-      }
-    } catch (error) {
-      console.error("Error fetching scanned data:", error);
-    }
+  const showProfileModal = () => {
+    setProfileModalVisible(true);
+    Animated.timing(profileModalAnimation, {
+      toValue: 0,
+      duration: 500,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideProfileModal = () => {
+    Animated.timing(profileModalAnimation, {
+      toValue: 0,
+      duration: 500,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }).start(() => setProfileModalVisible(false));
   };
 
   const handleCheckboxChange = (clickedIndex) => {
@@ -225,54 +321,16 @@ export default function Scanner() {
     });
   };
 
-  const handleProceedData = async () => {
-    const scannedDataJSON = await AsyncStorage.getItem("scannedData");
-    const scannedData = JSON.parse(scannedDataJSON);
-    const storedDataJSON = await AsyncStorage.getItem("userData");
-    const storedData = JSON.parse(storedDataJSON);
-    try {
-      console.log("book ticket", scannedData);
-      console.log("totalScannerTicketQty", totalScannerTicketQty);
-      const response = await fetch(
-        `${global.DomainName}/api/SacnneTicket/confirm-ticket`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + storedData.AuthorizationKey,
-          },
-          body: JSON.stringify({
-            BookTicketDeatils: scannedData.BookTicketDeatils,
-            ScannerLoginId: storedData.ScannerLoginId,
-            TotalSacnnerTicketQty: totalScannerTicketQty,
-          }),
-        }
-      );
-      if (!response.ok) {
-        if (responseBody.ResponseCode === 0) {
-          setWarning(true);
-        }
-        throw new Error(`Failed to fetch data`);
-      }
-      const responseBody = await response.json();
-      console.log("responseBody: ", responseBody);
-      setShowModal(false);
-      if (responseBody.ResponseCode === 0) {
-        setSuccess(true);
-      }
-      return responseBody;
-    } catch (error) {
-      console.error("Error fetching or parsing data:", error);
-    }
+  const handleFocusCamera = () => {
+    setScanned(false);
+    setScanData(null);
   };
 
-  // Modal Animation
   const showModal = () => {
     setShowModal(true);
     Animated.timing(modalAnimation, {
       toValue: 0,
-      duration: 500,
+      duration: 1000,
       easing: Easing.linear,
       useNativeDriver: true,
     }).start();
@@ -280,55 +338,57 @@ export default function Scanner() {
 
   const hideModal = () => {
     Animated.timing(modalAnimation, {
-      duration: 500,
+      toValue: hp("100%"),
+      duration: 1000,
       easing: Easing.linear,
       useNativeDriver: true,
     }).start(() => setShowModal(false));
   };
 
-  const showProfileModal = () => {
-    setProfileModalVisible(true);
-    Animated.timing(profileModalAnimation, {
-      toValue: 0,
-      duration: 500,
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const hideProfileModal = () => {
-    Animated.timing(profileModalAnimation, {
-      toValue: 0,
-      duration: 500,
-      easing: Easing.in(Easing.ease),
-      useNativeDriver: true,
-    }).start(() => setProfileModalVisible(false));
-  };
-
   const CustomCheckbox = ({ checked }) => (
     <View
-      style={{
-        backgroundColor: checked
-          ? "#942FFA"
-          : colorScheme === "dark"
-          ? "#888888"
-          : "#D8D8D8",
-        height: 25,
-        width: 25,
-        justifyContent: "center",
-        alignItems: "center",
-        borderRadius: 10,
-      }}
+      style={[
+        styles(colorScheme).checkbox,
+        {
+          backgroundColor: checked
+            ? "#942FFA"
+            : colorScheme === "dark"
+            ? "#888888"
+            : "#D8D8D8",
+        },
+      ]}
     >
       {checked && <Entypo name="check" size={15} color="#FFF" />}
     </View>
   );
 
+  if (hasPermission === null || hasPermission === false) {
+    return (
+      <Text
+        style={{
+          flex: 1,
+          backgroundColor: colorScheme === "dark" ? "#000" : "#FFF",
+        }}
+      >
+        Requesting for camera permission
+      </Text>
+    );
+  }
+
   return (
     <SafeAreaView style={styles(colorScheme).container}>
-      {/* Message Container */}
+      <View style={styles(colorScheme).categoriesList}>
+        <FlatList
+          data={DATA}
+          renderItem={renderScanner}
+          keyExtractor={(item) => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        />
+      </View>
+
       <View style={styles(colorScheme).messageContainer}>
-        {(success || warning) && (
+        {(success || warningMessage || warning) && (
           <View style={styles(colorScheme).successContainer}>
             <LinearGradient
               colors={success ? ["#b0e8d1", "#FFFFFF"] : ["#ffe0b3", "#FFFFFF"]}
@@ -341,6 +401,7 @@ export default function Scanner() {
                   gap: 20,
                   alignItems: "center",
                   padding: 20,
+                  overflow: "hidden",
                 }}
               >
                 <View
@@ -368,7 +429,11 @@ export default function Scanner() {
                   <Text
                     style={{ fontFamily: "Montserrat-SemiBold", fontSize: 16 }}
                   >
-                    {success ? success : warning}
+                    {success
+                      ? "Ticket successfully scanned"
+                      : warningMessage
+                      ? warningMessage
+                      : "Something is Went wrong"}
                   </Text>
                 </View>
               </View>
@@ -377,57 +442,117 @@ export default function Scanner() {
         )}
       </View>
 
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          gap: wp(3),
-        }}
-      >
-        <View style={styles(colorScheme).scannerCamera}>
-          <Camera
-            onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-            barcodeScannerSettings={{
-              barcodeTypes: ["qr", "pdf417"],
-            }}
-            ref={cameraRef}
-            style={{ flex: 1 }}
-          />
+      {category == "Scan" && (
+        <View style={{ gap: hp(2) }}>
+          <View style={styles(colorScheme).scannerCamera}>
+            <Camera
+              style={{ flex: 1 }}
+              ref={cameraRef}
+              onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+            />
+          </View>
+          {scanned && (
+            <TouchableOpacity
+              style={styles(colorScheme).submitButton}
+              onPress={() => setScanned(false)}
+            >
+              <Text style={styles(colorScheme).submitText}>Scan Again</Text>
+            </TouchableOpacity>
+          )}
         </View>
-        <TextInput
-          style={[
-            styles(colorScheme).inputContainer,
-            {
-              borderColor: isEmailFocused
-                ? "#cc9cfc"
-                : colorScheme === "dark"
-                ? "#333"
-                : "#ccc",
-            },
-          ]}
-          placeholder="Enter Code "
-          placeholderTextColor={"#b3b3b3"}
-          onFocus={() => setIsEmailFocused(true)}
-          onBlur={() => setIsEmailFocused(false)}
-          autoCapitalize="none"
-          value={email}
-          onChangeText={(value) => {
-            setEmail(value);
-          }}
-          blurOnSubmit={false}
-          returnKeyType="next"
-        />
-        <TouchableOpacity
-          style={styles(colorScheme).submitButton}
-          onPress={handleScanData}
-          hitSlop={30}
-        >
-          <Text style={styles(colorScheme).submitText}>Scan </Text>
-        </TouchableOpacity>
-      </View>
+      )}
 
-      {/* Modal Component */}
+      {category == "RFCode" && (
+        <View
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            gap: wp(2),
+            marginTop: hp(15),
+          }}
+        >
+          <Image
+            source={require("../../images/logo.png")}
+            style={styles(colorScheme).logoImage}
+          />
+          <TextInput
+            style={[
+              styles(colorScheme).inputContainer,
+              {
+                borderColor: isEmailFocused
+                  ? "#cc9cfc"
+                  : colorScheme === "dark"
+                  ? "#333"
+                  : "#ccc",
+              },
+            ]}
+            placeholder="Enter Code "
+            placeholderTextColor={"#b3b3b3"}
+            onFocus={() => setIsEmailFocused(true)}
+            onBlur={() => setIsEmailFocused(false)}
+            autoCapitalize="none"
+            value={email}
+            onChangeText={(value) => {
+              setEmail(value);
+            }}
+            blurOnSubmit={false}
+            returnKeyType="next"
+          />
+          <TouchableOpacity
+            style={styles(colorScheme).submitButton}
+            onPress={handleScanData}
+            hitSlop={30}
+          >
+            <Text style={styles(colorScheme).submitText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {category == "Manually" && (
+        <View
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            gap: wp(2),
+            marginTop: hp(15),
+          }}
+        >
+          <Image
+            source={require("../../images/logo.png")}
+            style={styles(colorScheme).logoImage}
+          />
+          <TextInput
+            style={[
+              styles(colorScheme).inputContainer,
+              {
+                borderColor: isEmailFocused
+                  ? "#cc9cfc"
+                  : colorScheme === "dark"
+                  ? "#333"
+                  : "#ccc",
+              },
+            ]}
+            placeholder="Enter KhelaiyaID "
+            placeholderTextColor={"#b3b3b3"}
+            onFocus={() => setIsEmailFocused(true)}
+            onBlur={() => setIsEmailFocused(false)}
+            autoCapitalize="none"
+            value={email}
+            onChangeText={(value) => {
+              setEmail(value);
+            }}
+            blurOnSubmit={false}
+            returnKeyType="next"
+          />
+          <TouchableOpacity
+            style={styles(colorScheme).submitButton}
+            onPress={handleScanData}
+            hitSlop={30}
+          >
+            <Text style={styles(colorScheme).submitText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       {IsshowModal && (
         <Modal transparent={true}>
           <Animated.View
@@ -539,146 +664,6 @@ export default function Scanner() {
           animationType="slide"
         >
           <TouchableWithoutFeedback onPress={hideProfileModal}>
-            {/* <View
-              style={{
-                flex: 1,
-                backgroundColor: "rgba(0, 0, 0, 0.8)",
-                justifyContent: "flex-end",
-              }}
-            >
-              <TouchableWithoutFeedback onPress={() => {}}>
-                <Animated.View
-                  style={{
-                    transform: [{ translateY: profileModalAnimation }],
-                    height: "30%",
-                    width: "90%",
-                    backgroundColor:
-                      colorScheme === "dark" ? "#262626" : "#FFFFFF",
-                    padding: 20,
-                    margin: 20,
-                  }}
-                >
-                  <TouchableOpacity
-                    onPress={hideProfileModal}
-                    style={{ alignItems: "flex-end" }}
-                  >
-                    <AntDesign
-                      name="closecircle"
-                      size={20}
-                      color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
-                      onPress={hideProfileModal}
-                    />
-                  </TouchableOpacity>
-                  <Image
-                    resizeMode="cover"
-                    source={{ uri: profileData.profilephoto }}
-                    style={{
-                      height: 80,
-                      width: 80,
-                      borderRadius: 50,
-                      position: "absolute",
-                      top: -40,
-                      left: 30,
-                      zIndex: 1,
-                    }}
-                  />
-
-                  <View style={{ paddingLeft: "2%", gap: 10, marginTop: "4%" }}>
-                    <Text
-                      style={{
-                        color: colorScheme === "dark" ? "#CCCCCC" : "#000000",
-                        fontSize: 20,
-                        fontFamily: "Montserrat-SemiBold",
-                        // position: 'absolute',
-                        // left: 0,
-                      }}
-                    >
-                      {profileData.group}
-                    </Text>
-                    <View style={{ flexDirection: "row", gap: wp(3) }}>
-                      <MaterialIcons
-                        name="person-outline"
-                        size={20}
-                        color={colorScheme === "dark" ? "#FFFFFF" : "#666666"}
-                      />
-                      <Text
-                        style={{
-                          color: colorScheme === "dark" ? "#CCCCCC" : "#666666",
-                          fontSize: 14,
-                          fontFamily: "Montserrat-SemiBold",
-                        }}
-                      >
-                        {profileData.name}
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: "row", gap: wp(3) }}>
-                      <Image
-                        source={
-                          colorScheme === "dark"
-                            ? require("../../images/face-id2.png")
-                            : require("../../images/face-id1.png")
-                        }
-                        style={{ height: hp("2.5%"), width: hp("2.5%") }}
-                      />
-                      <Text
-                        style={{
-                          color: colorScheme === "dark" ? "#CCCCCC" : "#666666",
-                          fontSize: 14,
-                          fontFamily: "Montserrat-SemiBold",
-                        }}
-                      >
-                        {profileData.RegistrationId}
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: "row", gap: wp(3) }}>
-                      <MaterialCommunityIcons
-                        name="email-variant"
-                        size={20}
-                        color={colorScheme === "dark" ? "#FFFFFF" : "#666666"}
-                        onPress={hideProfileModal}
-                      />
-                      <Text
-                        style={{
-                          color: colorScheme === "dark" ? "#CCCCCC" : "#666666",
-                          fontSize: 14,
-                          fontFamily: "Montserrat-SemiBold",
-                        }}
-                      >
-                        {profileData.email}
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: "row", gap: wp(3) }}>
-                      <Ionicons
-                        name="call-outline"
-                        size={20}
-                        color={colorScheme === "dark" ? "#FFFFFF" : "#666666"}
-                        onPress={hideProfileModal}
-                      />
-                      <Text
-                        style={{
-                          color: colorScheme === "dark" ? "#CCCCCC" : "#666666",
-                          fontSize: 14,
-                          fontFamily: "Montserrat-SemiBold",
-                        }}
-                      >
-                        {profileData.mobile}
-                      </Text>
-                    </View>
-                    <Text
-                      style={{
-                        color: "green",
-                        fontSize: 13,
-                        marginTop: hp(1),
-                        fontFamily: "Montserrat-SemiBold",
-                      }}
-                    >
-                      {profileData.response}
-                    </Text>
-                  </View>
-                </Animated.View>
-              </TouchableWithoutFeedback>
-            </View> */}
-
             <View style={styles(colorScheme).modalContents}>
               <TouchableOpacity
                 hitSlop={40}
@@ -733,10 +718,51 @@ const styles = (colorScheme) =>
     container: {
       flex: 1,
       backgroundColor: colorScheme === "dark" ? "#000000" : "#FFFFFF",
+      alignItems: "center",
+      gap: hp(20),
     },
+    categoriesList: {
+      height: hp(5),
+      alignItems: "center",
+    },
+    categoryItem: {
+      paddingVertical: hp(1),
+      paddingHorizontal: wp(5),
+    },
+    listTitle: {
+      color: colorScheme === "dark" ? "#CCCCCC" : "#000000",
+      fontSize: 18,
+      fontFamily: "Montserrat-Medium",
+    },
+    scannerCamera: {
+      width: wp(80),
+      height: wp(80),
+      overflow: "hidden",
+      borderRadius: 30,
+      justifyContent: "center",
+      backgroundColor: "#000",
+    },
+    submitButton: {
+      width: wp("50%"),
+      backgroundColor: "#942FFA",
+      alignItems: "center",
+      alignSelf: "center",
+      padding: hp(1),
+      borderRadius: 10,
+    },
+    submitText: {
+      color: "#FFFFFF",
+      fontFamily: "Montserrat-SemiBold",
+      fontSize: 22,
+    },
+    logoImage: {
+      position: "absolute",
+      opacity: 0.2,
+    },
+
     messageContainer: {
       position: "absolute",
-      top: hp(3),
+      top: hp(2),
       alignSelf: "center",
     },
     successContainer: {
@@ -750,32 +776,14 @@ const styles = (colorScheme) =>
       borderColor: "#FFFFFF",
       elevation: 5,
     },
-    submitButton: {
-      width: wp("40%"),
-      backgroundColor: "#942FFA",
+    checkbox: {
+      height: 25,
+      width: 25,
+      justifyContent: "center",
       alignItems: "center",
-      alignSelf: "center",
-      padding: hp(1),
       borderRadius: 10,
     },
-    submitText: {
-      color: "#FFFFFF",
-      fontSize: 18,
-      fontFamily: "Montserrat-SemiBold",
-    },
-    inputContainer: {
-      height: hp("6%"),
-      width: wp("90%"),
-      backgroundColor: colorScheme === "dark" ? "#444" : "#FFFFFF",
-      borderRadius: 30,
-      borderWidth: 1,
-      paddingHorizontal: wp(5),
-      elevation: 7,
-      marginBottom: hp(3),
-      fontSize: 16,
-      color: colorScheme === "dark" ? "#FFF" : "#5A5A5A",
-      fontFamily: "Montserrat-SemiBold",
-    },
+
     // after modal
     subContainer: {
       backgroundColor: colorScheme === "dark" ? "#333333" : "#e6e6e6",
@@ -784,6 +792,19 @@ const styles = (colorScheme) =>
       borderLeftColor: "#9938fa",
       margin: 10,
       padding: 10,
+    },
+    inputContainer: {
+      height: hp(7),
+      width: wp("90%"),
+      backgroundColor: colorScheme === "dark" ? "#444" : "#FFFFFF",
+      borderRadius: 30,
+      borderWidth: 1,
+      paddingHorizontal: wp(5),
+      elevation: 7,
+      marginBottom: hp(1),
+      fontSize: 22,
+      color: colorScheme === "dark" ? "#FFF" : "#5A5A5A",
+      fontFamily: "Montserrat-SemiBold",
     },
     row: {
       flexDirection: "row",
@@ -818,23 +839,6 @@ const styles = (colorScheme) =>
       letterSpacing: 1,
       fontFamily: "Montserrat-SemiBold",
     },
-    profileContainer: {
-      backgroundColor: colorScheme === "dark" ? "#262626" : "#FFFFFF",
-      padding: 20,
-      borderRadius: 10,
-      alignItems: "center",
-    },
-    profileText: {
-      fontSize: 18,
-      color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
-    },
-    profileImage: {
-      height: 100,
-      width: 100,
-      borderRadius: 50,
-      marginVertical: 20,
-    },
-
     modalContents: {
       flex: 1,
       backgroundColor: colorScheme === "dark" ? "#333333" : "#FFFFFF",
@@ -842,16 +846,6 @@ const styles = (colorScheme) =>
       alignItems: "center",
       padding: 20,
       gap: hp(5),
-    },
-    title: {
-      fontFamily: "Montserrat-Bold",
-      fontSize: 26,
-      color: colorScheme === "dark" ? "#CCCCCC" : "#000000",
-    },
-    subtitle: {
-      fontFamily: "Montserrat-SemiBold",
-      fontSize: 18,
-      color: colorScheme === "dark" ? "#CCCCCC" : "#444",
     },
     imageContainer: {
       position: "relative",
@@ -894,11 +888,5 @@ const styles = (colorScheme) =>
       borderRadius: wp(50),
       borderWidth: 2,
       borderColor: "rgba(128, 128, 128, 0.2)",
-    },
-    scannerCamera: {
-      flex: 1,
-      margin: 50,
-      overflow: "hidden",
-      borderRadius: 30,
     },
   });

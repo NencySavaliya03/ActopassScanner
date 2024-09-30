@@ -55,7 +55,6 @@ export default function MainStack() {
           borderColor: "transparent",
           backgroundColor: colorScheme === "dark" ? "#000" : "#fff",
         },
-
         headerTintColor: colorScheme === "dark" ? "#fff" : "#000",
         headerTitleStyle: {
           color: "transparent",
