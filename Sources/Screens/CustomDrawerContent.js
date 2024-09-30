@@ -182,24 +182,24 @@ export default function CustomDrawerContent(props) {
 
       {showLogoutModal && (
         <Modal transparent={true}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Log Out? </Text>
-              <Text style={styles.modalMessage}>
+          <View style={styles(colorScheme).modalContainer}>
+            <View style={styles(colorScheme).modalContent}>
+              <Text style={styles(colorScheme).modalTitle}>Log Out? </Text>
+              <Text style={styles(colorScheme).modalMessage}>
                 Are you sure you want to log out?{" "}
               </Text>
-              <View style={styles.buttonContainer}>
+              <View style={styles(colorScheme).buttonContainer}>
                 <TouchableOpacity
-                  style={styles.confirmButton}
+                  style={styles(colorScheme).confirmButton}
                   onPress={handleConfirmSignOut}
                 >
-                  <Text style={styles.confirmText}>Log Out </Text>
+                  <Text style={styles(colorScheme).confirmText}>Log Out </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.cancelButton}
+                  style={styles(colorScheme).cancelButton}
                   onPress={cancelSignOut}
                 >
-                  <Text style={styles.cancelText}>Cancel </Text>
+                  <Text style={styles(colorScheme).cancelText}>Cancel </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -210,68 +210,74 @@ export default function CustomDrawerContent(props) {
   );
 }
 
-const styles = StyleSheet.create({
-  logoutButton: {
-    backgroundColor: "#7306e0",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  logoutButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: 300,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 20,
-    alignItems: "center",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  modalMessage: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 20,
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  confirmButton: {
-    backgroundColor: "#7306e0",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    width: "48%",
-  },
-  cancelButton: {
-    backgroundColor: "#ccc",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    width: "48%",
-  },
-  confirmText: {
-    color: "#fff",
-    textAlign: "center",
-    fontWeight: "600",
-  },
-  cancelText: {
-    color: "#000",
-    textAlign: "center",
-    fontWeight: "600",
-  },
-});
+const styles = (colorScheme) =>
+  StyleSheet.create({
+    logoutButton: {
+      backgroundColor: "#7306e0",
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+    },
+    logoutButtonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor:
+        colorScheme === "dark"
+          ? "rgba(255, 255, 255, 0.2)"
+          : "rgba(0, 0, 0, 0.5)",
+    },
+    modalContent: {
+      width: 300,
+      backgroundColor: colorScheme === "dark" ? "#000" : "#FFF",
+      borderRadius: 8,
+      padding: 20,
+      alignItems: "center",
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontFamily: "Montserrat-SemiBold",
+      marginBottom: 10,
+      color: colorScheme === "dark" ? "#FFF" : "#000",
+    },
+    modalMessage: {
+      fontSize: 14,
+      fontFamily: "Montserrat-SemiBold",
+      color: colorScheme === "dark" ? "#ccc" : "#666",
+      marginBottom: 20,
+    },
+    buttonContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      width: "100%",
+    },
+    confirmButton: {
+      backgroundColor: "#7306e0",
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+      width: "48%",
+    },
+    cancelButton: {
+      backgroundColor: "#ccc",
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+      width: "48%",
+    },
+    confirmText: {
+      color: "#fff",
+      textAlign: "center",
+      fontWeight: "600",
+    },
+    cancelText: {
+      color: "#000",
+      textAlign: "center",
+      fontWeight: "600",
+    },
+  });

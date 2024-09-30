@@ -11,12 +11,10 @@ import {
   Easing,
   PanResponder,
   TextInput,
-<<<<<<< HEAD
   FlatList,
-=======
   Alert,
   StatusBar,
->>>>>>> 7b7139c9ce69643d263021abefbcf33e68b785b4
+  TouchableWithoutFeedback,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Camera } from "expo-camera";
@@ -55,7 +53,7 @@ export default function ScannerCopy() {
   const [email, setEmail] = useState("");
   const [category, setCategory] = useState("RFCode");
   const profileModalAnimation = useRef(new Animated.Value(hp("100%"))).current;
-
+  const [IsLoading, setLoading] = useState(false);
   const cameraRef = useRef(null);
 
   useEffect(() => {
@@ -105,14 +103,26 @@ export default function ScannerCopy() {
         style={[
           styles(colorScheme).categoryItem,
           {
-            backgroundColor: category == item.name ? "#942FFA" : "#eee",
+            backgroundColor:
+              category === item.name
+                ? "#942FFA"
+                : colorScheme === "dark"
+                ? "#444"
+                : "#EEEEEE",
           },
         ]}
       >
         <Text
           style={[
             styles(colorScheme).listTitle,
-            { color: category == item.name ? "#FFF" : "#000" },
+            {
+              color:
+                category == item.name
+                  ? "#FFF"
+                  : colorScheme === "dark"
+                  ? "#FFF"
+                  : "#000",
+            },
           ]}
         >
           {item.name}
@@ -124,8 +134,10 @@ export default function ScannerCopy() {
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     setScanData(data);
+    setLoading(true);
     const storedDataJSON = await AsyncStorage.getItem("userData");
     const storedData = JSON.parse(storedDataJSON);
+
     try {
       const response = await fetch(`${global.DomainName}/api/SacnneTicket`, {
         method: "POST",
@@ -135,27 +147,42 @@ export default function ScannerCopy() {
           Authorization: "Bearer " + storedData.AuthorizationKey,
         },
         body: JSON.stringify({
-          QrCode: data,
-          ScannerLoginId: storedData.ScannerLoginId,
+          QrCode: data.trim(""),
+          ScannerLoginId: 26,
+          Type: "RFID",
         }),
       });
+
+      const responseBody = await response;
+      console.log("responseBody", responseBody);
       if (!response.ok) {
         if (response.status === 404) {
           const responseBody = await response.json();
-          setWarningMessage(responseBody.ResponseMessage);
+          setWarning(responseBody.ResponseMessage);
         }
       } else {
         const scannedData = await response.json();
-        console.log("scannedData: ", scannedData);
-        dispatch(SET_SCANDATA(scannedData));
-        await AsyncStorage.setItem("scannedData", JSON.stringify(scannedData));
-        fetchData();
-        setShowModal(true);
-        showModal();
+        if (scannedData.ScannerType == "Vendor") {
+          setSuccess(
+            scannedData.VendorGroupName + "vendor is scanned successfully."
+          );
+        } else {
+          console.log("scannedData: ", scannedData.ResponseMessage);
+          dispatch(SET_SCANDATA(scannedData));
+          await AsyncStorage.setItem(
+            "scannedData",
+            JSON.stringify(scannedData)
+          );
+          fetchData();
+          setShowModal(true);
+          showModal();
+        }
       }
     } catch (error) {
       setScanned(false);
       console.error("Error:", error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -216,7 +243,7 @@ export default function ScannerCopy() {
       console.log("responseBody: ", responseBody);
       setShowModal(false);
       if (responseBody.ResponseCode === 0) {
-        setSuccess(true);
+        setSuccess(responseBody.ResponseMessage);
       }
       return responseBody;
     } catch (error) {
@@ -243,24 +270,23 @@ export default function ScannerCopy() {
         body: JSON.stringify({
           QrCode: email,
           ScannerLoginId: storedData.ScannerLoginId,
+          Type: category == "RFCode" ? "RFID" : "Khelaiyaid",
         }),
       });
 
       if (!response.ok) {
-        if (response.status === 404) {
+        const responseBody = await response.json();
+        if (responseBody.ResponseCode == -1) {
           setEmail("");
-          const responseBody = await response.json();
           setWarning(responseBody.ResponseMessage);
+          console.log(warning);
         } else {
-          console.log(JSON.stringify(response, null, 2), response.ok);
           setEmail("");
-          const responseBody = await response.json();
           setWarning(responseBody.ResponseMessage || "Data not exist");
         }
       } else {
         const scannedData = await response.json();
         dispatch(SET_SCANDATA(scannedData));
-        console.log(scannedData);
         await AsyncStorage.setItem("scannedData", JSON.stringify(scannedData));
         fetchData();
         if (scannedData.ResponseCode === 0) {
@@ -282,7 +308,7 @@ export default function ScannerCopy() {
             showModal();
             setShowModal(true);
           }
-          setSuccess(scannedData.ResponseMessage);
+          // setSuccess(scannedData.ResponseMessage);
         }
       }
       setEmail("");
@@ -331,55 +357,6 @@ export default function ScannerCopy() {
     });
   };
 
-<<<<<<< HEAD
-  const handleFocusCamera = () => {
-    setScanned(false);
-    setScanData(null);
-=======
-  const handleProceedData = async () => {
-    const scannedDataJSON = await AsyncStorage.getItem("scannedData");
-    const scannedData = JSON.parse(scannedDataJSON);
-    const storedDataJSON = await AsyncStorage.getItem("userData");
-    const storedData = JSON.parse(storedDataJSON);
-    try {
-      console.log("book ticket", scannedData);
-      console.log("totalScannerTicketQty", totalScannerTicketQty);
-      const response = await fetch(
-        `${global.DomainName}/api/SacnneTicket/confirm-ticket`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + storedData.AuthorizationKey,
-          },
-          body: JSON.stringify({
-            BookTicketDeatils: scannedData.BookTicketDeatils,
-            ScannerLoginId: storedData.ScannerLoginId,
-            TotalSacnnerTicketQty: totalScannerTicketQty,
-          }),
-        }
-      );
-      if (!response.ok) {
-        if (responseBody.ResponseCode === 0) {
-          setWarning(true);
-        }
-        throw new Error(`Failed to fetch data`);
-      }
-      const responseBody = await response.json();
-      console.log("responseBody: ", responseBody);
-      setShowModal(false);
-      if (responseBody.ResponseCode === 0) {
-        setSuccess(true);
-      }
-
-      return responseBody;
-    } catch (error) {
-      console.error("Error fetching or parsing data:", error);
-    }
->>>>>>> 7b7139c9ce69643d263021abefbcf33e68b785b4
-  };
-
   const showModal = () => {
     setShowModal(true);
     Animated.timing(modalAnimation, {
@@ -399,30 +376,6 @@ export default function ScannerCopy() {
     }).start(() => setShowModal(false));
   };
 
-<<<<<<< HEAD
-=======
-  const showProfileModal = () => {
-    setProfileModalVisible(true);
-    Animated.timing(profileModalAnimation, {
-      toValue: 0,
-      duration: 500,
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const hideProfileModal = () => {
-    // Animated.timing(profileModalAnimation, {
-    //   toValue: 0,
-    //   duration: 500,
-    //   easing: Easing.in(Easing.ease),
-    //   useNativeDriver: true,
-    // }).start(() => setProfileModalVisible(false));
-  };
-
-  console.log("profileModal", profileData);
-
->>>>>>> 7b7139c9ce69643d263021abefbcf33e68b785b4
   const CustomCheckbox = ({ checked }) => (
     <View
       style={[
@@ -466,7 +419,7 @@ export default function ScannerCopy() {
       </View>
 
       <View style={styles(colorScheme).messageContainer}>
-        {(success || warningMessage || warning) && (
+        {(success || warning) && (
           <View style={styles(colorScheme).successContainer}>
             <LinearGradient
               colors={success ? ["#b0e8d1", "#FFFFFF"] : ["#ffe0b3", "#FFFFFF"]}
@@ -507,11 +460,7 @@ export default function ScannerCopy() {
                   <Text
                     style={{ fontFamily: "Montserrat-SemiBold", fontSize: 16 }}
                   >
-                    {success
-                      ? "Ticket successfully scanned"
-                      : warningMessage
-                      ? warningMessage
-                      : "Something is Went wrong"}
+                    {success ? success : warning}
                   </Text>
                 </View>
               </View>
@@ -551,7 +500,7 @@ export default function ScannerCopy() {
         >
           <Image
             source={require("../../images/logo.png")}
-            style={styles(colorScheme).logoImage}
+            style={styles(colorScheme).modalLogo}
           />
           <TextInput
             style={[
@@ -597,7 +546,7 @@ export default function ScannerCopy() {
         >
           <Image
             source={require("../../images/logo.png")}
-            style={styles(colorScheme).logoImage}
+            style={styles(colorScheme).modalLogo}
           />
           <TextInput
             style={[
@@ -760,7 +709,7 @@ export default function ScannerCopy() {
                 <Image
                   source={
                     profileData.profilephoto.length == 0
-                      ? require("../../images/profile.png ")
+                      ? require("../../images/profile.png")
                       : {
                           uri: profileData.profilephoto,
                         }
@@ -874,6 +823,10 @@ const styles = (colorScheme) =>
       alignItems: "center",
       borderRadius: 10,
     },
+    modalLogo: {
+      position: "absolute",
+      opacity: 0.2,
+    },
 
     // after modal
     subContainer: {
@@ -930,8 +883,6 @@ const styles = (colorScheme) =>
       letterSpacing: 1,
       fontFamily: "Montserrat-SemiBold",
     },
-<<<<<<< HEAD
-=======
     profileContainer: {
       backgroundColor: colorScheme === "dark" ? "#262626" : "#FFFFFF",
       padding: 20,
@@ -956,7 +907,6 @@ const styles = (colorScheme) =>
       bottom: -hp(2),
     },
 
->>>>>>> 7b7139c9ce69643d263021abefbcf33e68b785b4
     modalContents: {
       flex: 1,
       backgroundColor: colorScheme === "dark" ? "#000000" : "#FFFFFF",
@@ -965,8 +915,6 @@ const styles = (colorScheme) =>
       padding: 20,
       gap: hp(5),
     },
-<<<<<<< HEAD
-=======
     title: {
       fontFamily: "Montserrat-Bold",
       fontSize: 26,
@@ -984,7 +932,6 @@ const styles = (colorScheme) =>
       color: colorScheme === "dark" ? "#CCCCCC" : "#000000",
       marginBottom: hp(5),
     },
->>>>>>> 7b7139c9ce69643d263021abefbcf33e68b785b4
     imageContainer: {
       marginBottom: 20,
       alignItems: "center",

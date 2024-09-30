@@ -1,13 +1,24 @@
-import { Appearance, StyleSheet, Text, View, Image, ScrollView, ActivityIndicator } from "react-native";
+import {
+  Appearance,
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import * as Font from "expo-font";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 import { useDispatch, useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SET_HISTORYDATA } from "../../redux/Login/loginSlice";
-import ShimmerLoader from '../Screens/Skeleton';
+import ShimmerLoader from "../Screens/Skeleton";
 
-export default function HistoryScreen({ }) {
+export default function HistoryScreen({}) {
   const dispatch = useDispatch();
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
   const historyData = useSelector((state) => state.loginData.historyData);
@@ -42,7 +53,8 @@ export default function HistoryScreen({ }) {
         const userData = JSON.parse(userDataJSON);
 
         const response = await fetch(
-          `${global.DomainName}/api/SacnneTicket/TicketHistory/${userData.ScannerLoginId}`, {
+          `${global.DomainName}/api/SacnneTicket/TicketHistory/${userData.ScannerLoginId}`,
+          {
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
@@ -56,6 +68,8 @@ export default function HistoryScreen({ }) {
         }
 
         const historyData = await response.json();
+        console.log(historyData[0].EventMainImage);
+
         dispatch(SET_HISTORYDATA(historyData));
         await AsyncStorage.setItem("historyData", JSON.stringify(historyData));
       } catch (error) {
@@ -68,50 +82,98 @@ export default function HistoryScreen({ }) {
   }, []);
 
   const handleHistory = () => {
-    return(
+    return (
       <ScrollView>
         {Array.isArray(historyData) && historyData.length > 0 ? (
           historyData.map((item, index) => (
             <View key={index} style={styles(colorScheme).subContainer}>
-              <View style={{ overflow: "hidden", borderRadius: 15,backgroundColor: "#CCCCCC" }}>
-              {item.EventMainImage && item.EventMainImage !== null ? (
-                <Image
-                  resizeMode="stretch"
-                  style={{ height: 150, width: wp("35%") }}
-                  source={{ uri: item.EventMainImage }}
-                />
-              ) : (
-                <Image
-                  resizeMode="stretch"
-                  style={{ height: 150, width: wp("35%") }}
-                  source={require('../../images/event-banner.png')}
-                />
-            )}
+              <View
+                style={{
+                  overflow: "hidden",
+                  borderRadius: 15,
+                  backgroundColor: "#CCCCCC",
+                }}
+              >
+                {item.EventMainImage && item.EventMainImage !== null ? (
+                  <Image
+                    resizeMode="stretch"
+                    style={{ height: 150, width: wp("35%") }}
+                    source={{ uri: item.EventMainImage }}
+                  />
+                ) : (
+                  <Image
+                    resizeMode="stretch"
+                    style={{ height: 150, width: wp("35%") }}
+                    source={require("../../images/event-banner.png")}
+                  />
+                )}
               </View>
-              <View style={{ gap: 15, width: wp('45%') }}>
-                <Text numberOfLines={1} style={[styles(colorScheme).contentText, { fontFamily: 'Montserrat-Bold', fontSize: 20, color: colorScheme === "dark" ? "#FFFFFF" : "#000000", }]}>{item.EventName}</Text>
-                <Text style={styles(colorScheme).contentText}>{item.EventDate}  |  {item.EventTime}</Text>
-                <Text style={styles(colorScheme).contentText}>{item.EventAddress}</Text>
-                <Text numberOfLines={1} style={styles(colorScheme).contentText}>{`${item.SacnneTicketQty} Tickets`}</Text>
+              <View style={{ gap: 15, width: wp("45%") }}>
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles(colorScheme).contentText,
+                    {
+                      fontFamily: "Montserrat-Bold",
+                      fontSize: 20,
+                      color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
+                    },
+                  ]}
+                >
+                  {item.EventName}
+                </Text>
+                <Text style={styles(colorScheme).contentText}>
+                  {item.EventDate} | {item.EventTime}
+                </Text>
+                <Text style={styles(colorScheme).contentText}>
+                  {item.EventAddress}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  style={styles(colorScheme).contentText}
+                >{`${item.SacnneTicketQty} Tickets`}</Text>
               </View>
             </View>
           ))
         ) : (
-          <Text style={[styles(colorScheme).titleText, { fontSize: 16, alignSelf: 'center' }]}>No event found !</Text>
+          <Text
+            style={[
+              styles(colorScheme).titleText,
+              { fontSize: 16, alignSelf: "center" },
+            ]}
+          >
+            No event found !
+          </Text>
         )}
       </ScrollView>
-    )
-  }
+    );
+  };
 
   return (
     <View style={styles(colorScheme).container}>
       <Text style={styles(colorScheme).titleText}>History</Text>
-      {loading ?  (
-        <View>
-        <ShimmerLoader style={{ width: '90%', height: 160, borderRadius: 20, marginBottom: 10 }} />
-        <ShimmerLoader style={{ width: '90%', height: 160, borderRadius: 20, marginBottom: 10 }} />
-      </View>
-      ) :( handleHistory())}
+      {loading ? (
+        <View style={{ alignItems: "center" }}>
+          <ShimmerLoader
+            style={{
+              width: "90%",
+              height: 160,
+              borderRadius: 20,
+              marginBottom: 10,
+            }}
+          />
+          <ShimmerLoader
+            style={{
+              width: "90%",
+              height: 160,
+              borderRadius: 20,
+              marginBottom: 10,
+            }}
+          />
+        </View>
+      ) : (
+        handleHistory()
+      )}
     </View>
   );
 }
@@ -122,7 +184,6 @@ const styles = (colorScheme) =>
       flex: 1,
       // justifyContent: "center",
       backgroundColor: colorScheme === "dark" ? "#000000" : "#FFFFFF",
-      paddingTop: 40,
     },
     loadingContainer: {
       flex: 1,
@@ -134,13 +195,13 @@ const styles = (colorScheme) =>
       fontSize: 22,
       color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
       padding: 20,
-      fontFamily: 'Montserrat-SemiBold'
+      fontFamily: "Montserrat-SemiBold",
     },
     subContainer: {
       flex: 1,
       flexDirection: "row",
       alignSelf: "center",
-      alignItems: 'center',
+      alignItems: "center",
       gap: 20,
       marginBottom: 20,
       width: wp("90%"),
