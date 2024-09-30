@@ -17,7 +17,11 @@ import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SET_USERDATA } from "../../redux/Login/loginSlice";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+import * as Font from "expo-font";
 
 export default function CustomDrawerContent(props) {
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
@@ -29,6 +33,7 @@ export default function CustomDrawerContent(props) {
   async function loadFonts() {
     await Font.loadAsync({
       "Montserrat-SemiBold": require("../../assets/fonts/Montserrat-SemiBold.ttf"),
+      "Montserrat-Bold": require("../../assets/fonts/Montserrat-Bold.ttf"),
       "Montserrat-Medium": require("../../assets/fonts/Montserrat-Medium.ttf"),
     });
   }
@@ -75,7 +80,7 @@ export default function CustomDrawerContent(props) {
   const handleSignOut = async () => {
     try {
       await AsyncStorage.clear();
-      navigation.navigate("MainStackView");
+      navigation.popToTop();
     } catch (error) {
       console.error("Error clearing AsyncStorage:", error);
     }
@@ -166,7 +171,7 @@ export default function CustomDrawerContent(props) {
                 fontSize: 16,
                 fontFamily: "Montserrat-SemiBold",
                 color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
-                width: wp(30)
+                width: wp(30),
               }}
             >
               Sign out{" "}

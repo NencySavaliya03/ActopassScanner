@@ -3,6 +3,7 @@ import {
   FlatList,
   Image,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -83,10 +84,19 @@ export default function KhelaiyaHistory() {
 
   return (
     <View style={styles(colorScheme).container}>
+      <StatusBar
+        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+        backgroundColor={colorScheme === "dark" ? "#000" : "#fff"}
+      />
       <View style={styles(colorScheme).inputContainer}>
         <View style={styles(colorScheme).passwordContent}>
+          <StatusBar />
           <Image
-            style={{ height: hp("2%"), width: hp("2%") }}
+            style={{
+              height: hp("2%"),
+              width: hp("2%"),
+              tintColor: colorScheme === "dark" ? "#FFF" : "#000",
+            }}
             source={require("../../images/search.png")}
           />
           <TextInput
@@ -137,13 +147,18 @@ export default function KhelaiyaHistory() {
                   </View>
                   <View>
                     <Image
-                      source={{
-                        uri: item.ProfileImage,
-                      }}
+                      source={
+                        item.ProfileImage.length == 0
+                          ? require("../../images/profile.png")
+                          : {
+                              uri: item.ProfileImage,
+                            }
+                      }
                       style={{
-                        height: hp("18%"),
+                        height: wp("30%"),
                         width: wp("30%"),
                         borderRadius: 10,
+                        resizeMode: "contain",
                       }}
                     />
                   </View>
@@ -161,7 +176,7 @@ const styles = (colorScheme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: "#FFF",
+      backgroundColor: colorScheme === "dark" ? "#000" : "#FFF",
       padding: wp(2),
       alignItems: "center",
       gap: hp(3),
@@ -188,12 +203,17 @@ const styles = (colorScheme) =>
       fontFamily: "Montserrat-Medium",
     },
     historyContainer: {
-      backgroundColor: "#EEEEEE",
+      // backgroundColor: "#EEEEEE",
+      borderWidth: 1,
       width: wp("95%"),
       borderRadius: wp(2),
       padding: wp(1),
       borderLeftWidth: 3,
       borderLeftColor: "#942FFA",
+      borderRightColor: "#d2d2d2",
+      borderTopColor: "#d2d2d2",
+      borderBottomColor: "#d2d2d2",
+
       marginBottom: hp(2),
     },
     historyItem: {
