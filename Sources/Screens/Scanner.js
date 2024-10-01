@@ -29,9 +29,9 @@ import { Entypo } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "react-native";
-import { CameraView } from "expo-camera/next";
 import { useDispatch, useSelector } from "react-redux";
 import { SET_SCANDATA } from "../../redux/Login/loginSlice";
+import NetInfo from "@react-native-community/netinfo";
 
 export default function ScannerCopy() {
   const dispatch = useDispatch();
@@ -56,6 +56,20 @@ export default function ScannerCopy() {
   const profileModalAnimation = useRef(new Animated.Value(hp("100%"))).current;
   const [IsLoading, setLoading] = useState(false);
   const cameraRef = useRef(null);
+  const [isConnected, setIsConnected] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected);
+    });
+    NetInfo.fetch().then((state) => {
+      setIsConnected(state.isConnected);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const getCameraPermissions = async () => {
@@ -135,6 +149,7 @@ export default function ScannerCopy() {
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     setScanData(data);
+    setLoading(true);
     const storedDataJSON = await AsyncStorage.getItem("userData");
     const storedData = JSON.parse(storedDataJSON);
 
@@ -181,6 +196,8 @@ export default function ScannerCopy() {
     } catch (error) {
       setScanned(false);
       console.error("Error:", error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -252,7 +269,6 @@ export default function ScannerCopy() {
   const handleScanData = async () => {
     setSuccess("");
     setWarning("");
-    setLoading(true);
     if (warning == "" && email == "") {
       return;
     }
@@ -313,8 +329,6 @@ export default function ScannerCopy() {
       setEmail("");
     } catch (error) {
       console.error("Error:", error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -407,342 +421,396 @@ export default function ScannerCopy() {
     );
   }
 
+  if (IsLoading) {
+    return (
+      <ActivityIndicator
+        size={50}
+        style={{
+          flex: 1,
+          backgroundColor: colorScheme === "dark" ? "#000" : "#FFF",
+        }}
+      />
+    );
+  }
+
   return (
     <SafeAreaView style={styles(colorScheme).container}>
-      <View style={styles(colorScheme).categoriesList}>
-        <FlatList
-          data={DATA}
-          renderItem={renderScanner}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        />
-      </View>
+      {isConnected ? (
+        <View style={{ gap: hp(20) }}>
+          <View style={styles(colorScheme).categoriesList}>
+            <FlatList
+              data={DATA}
+              renderItem={renderScanner}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
 
-      <View style={styles(colorScheme).messageContainer}>
-        {(success || warning) && (
-          <View style={styles(colorScheme).successContainer}>
-            <LinearGradient
-              colors={success ? ["#b0e8d1", "#FFFFFF"] : ["#ffe0b3", "#FFFFFF"]}
-              style={styles(colorScheme).successMessages}
+          <View style={styles(colorScheme).messageContainer}>
+            {(success || warning) && (
+              <View style={styles(colorScheme).successContainer}>
+                <LinearGradient
+                  colors={
+                    success ? ["#b0e8d1", "#FFFFFF"] : ["#ffe0b3", "#FFFFFF"]
+                  }
+                  style={styles(colorScheme).successMessages}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      width: wp("100%"),
+                      gap: 20,
+                      alignItems: "center",
+                      padding: 20,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <View
+                      style={{
+                        height: 45,
+                        width: 45,
+                        backgroundColor: "#FFF",
+                        borderRadius: 50,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        elevation: 2,
+                      }}
+                    >
+                      <Image
+                        source={
+                          success
+                            ? require("../../images/tick-mark.png")
+                            : require("../../images/warning-sign.png")
+                        }
+                        resizeMode="stretch"
+                        style={{ height: 25, width: 25 }}
+                      />
+                    </View>
+                    <View
+                      style={{ width: wp("60%"), overflow: "hidden", gap: 5 }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Montserrat-SemiBold",
+                          fontSize: 16,
+                        }}
+                      >
+                        {success ? success : warning}
+                      </Text>
+                    </View>
+                  </View>
+                </LinearGradient>
+              </View>
+            )}
+          </View>
+
+          {category == "Scan" && (
+            <View style={{ gap: hp(2) }}>
+              <View style={styles(colorScheme).scannerCamera}>
+                <Camera
+                  style={{ flex: 1 }}
+                  ref={cameraRef}
+                  onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+                />
+              </View>
+              {scanned && (
+                <TouchableOpacity
+                  style={styles(colorScheme).submitButton}
+                  onPress={() => setScanned(false)}
+                >
+                  <Text style={styles(colorScheme).submitText}>Scan Again</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {category == "RFCode" && (
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                gap: wp(2),
+                marginTop: hp(15),
+              }}
             >
-              <View
+              <Image
+                source={require("../../images/logo.png")}
+                style={styles(colorScheme).modalLogo}
+              />
+              <TextInput
+                style={[
+                  styles(colorScheme).inputContainer,
+                  {
+                    borderColor: isEmailFocused
+                      ? "#cc9cfc"
+                      : colorScheme === "dark"
+                      ? "#333"
+                      : "#ccc",
+                  },
+                ]}
+                placeholder="Enter Code "
+                placeholderTextColor={"#b3b3b3"}
+                onFocus={() => setIsEmailFocused(true)}
+                onBlur={() => setIsEmailFocused(false)}
+                autoCapitalize="none"
+                value={email}
+                onChangeText={(value) => {
+                  setEmail(value);
+                }}
+                blurOnSubmit={false}
+                returnKeyType="next"
+              />
+              <TouchableOpacity
+                style={styles(colorScheme).submitButton}
+                onPress={handleScanData}
+                hitSlop={30}
+              >
+                <Text style={styles(colorScheme).submitText}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {category == "Manually" && (
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                gap: wp(2),
+                marginTop: hp(15),
+              }}
+            >
+              <Image
+                source={require("../../images/logo.png")}
+                style={styles(colorScheme).modalLogo}
+              />
+              <TextInput
+                style={[
+                  styles(colorScheme).inputContainer,
+                  {
+                    borderColor: isEmailFocused
+                      ? "#cc9cfc"
+                      : colorScheme === "dark"
+                      ? "#333"
+                      : "#ccc",
+                  },
+                ]}
+                placeholder="Enter KhelaiyaID "
+                placeholderTextColor={"#b3b3b3"}
+                onFocus={() => setIsEmailFocused(true)}
+                onBlur={() => setIsEmailFocused(false)}
+                autoCapitalize="none"
+                value={email}
+                onChangeText={(value) => {
+                  setEmail(value);
+                }}
+                blurOnSubmit={false}
+                returnKeyType="next"
+              />
+              <TouchableOpacity
+                style={styles(colorScheme).submitButton}
+                onPress={handleScanData}
+                hitSlop={30}
+              >
+                <Text style={styles(colorScheme).submitText}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {IsshowModal && (
+            <Modal transparent={true}>
+              <Animated.View
                 style={{
-                  flexDirection: "row",
-                  width: wp("100%"),
-                  gap: 20,
+                  ...StyleSheet.absoluteFillObject,
+                  flex: 1,
+                  justifyContent: "flex-end",
                   alignItems: "center",
-                  padding: 20,
-                  overflow: "hidden",
+                  transform: [{ translateY: modalAnimation }],
                 }}
               >
                 <View
                   style={{
-                    height: 45,
-                    width: 45,
-                    backgroundColor: "#FFF",
-                    borderRadius: 50,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    elevation: 2,
+                    backgroundColor:
+                      colorScheme === "dark" ? "#262626" : "#F2F2F2",
+                    padding: 15,
+                    width: "95%",
+                    height: "75%",
+                    borderRadius: 10,
                   }}
                 >
+                  <View
+                    style={{
+                      height: 60,
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <View style={{ paddingLeft: 20, gap: 10 }}>
+                      <View style={{}}>
+                        <Text
+                          style={{
+                            color:
+                              colorScheme === "dark" ? "#CCCCCC" : "#000000",
+                            fontSize: 22,
+                            fontFamily: "Montserrat-Medium",
+                          }}
+                        >
+                          {scannedData.TicketType} - {persons.length} Tickets
+                        </Text>
+                      </View>
+                      <View style={{ width: "90%" }}>
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            color:
+                              colorScheme === "dark" ? "#CCCCCC" : "#000000",
+                            fontFamily: "Montserrat-Medium",
+                            fontSize: 16,
+                          }}
+                        >
+                          {" "}
+                          you'll enjoy {scannedData.TicketType} perks and
+                          benefits that will elevate your event experience to
+                          new heights.
+                        </Text>
+                      </View>
+                    </View>
+                    <View>
+                      <AntDesign
+                        name="closecircle"
+                        size={25}
+                        color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
+                        style={{ alignSelf: "flex-end" }}
+                        onPress={() => hideModal()}
+                      />
+                    </View>
+                  </View>
+                  <ScrollView
+                    style={styles(colorScheme).subContainer}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    <View style={styles(colorScheme).sub_Content}>
+                      {persons.map((person, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={styles(colorScheme).row}
+                          onPress={() => handleCheckboxChange(index)}
+                        >
+                          <Text style={styles(colorScheme).text}>
+                            Person {index + 1}
+                          </Text>
+                          <CustomCheckbox checked={person.checked} />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </ScrollView>
+                  <TouchableOpacity
+                    style={[
+                      styles(colorScheme).ProceedButton,
+                      totalScannerTicketQty < 1 && {
+                        opacity: 0.5,
+                        backgroundColor:
+                          colorScheme === "dark" ? "#333333" : "#333333",
+                      },
+                    ]}
+                    onPress={() => {
+                      totalScannerTicketQty >= 1 && handleProceedData();
+                    }}
+                    disabled={totalScannerTicketQty < 1}
+                  >
+                    <Text style={styles(colorScheme).ProceedText}>Proceed</Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            </Modal>
+          )}
+
+          {profileModalVisible && (
+            <Modal transparent={true} visible={true} animationType="slide">
+              <StatusBar
+                backgroundColor={colorScheme === "dark" ? "#000000" : "#CCCCCC"}
+              />
+              <TouchableWithoutFeedback onPress={hideProfileModal}>
+                <View style={styles(colorScheme).modalContents}>
+                  <TouchableOpacity
+                    hitSlop={40}
+                    style={{ position: "absolute", top: hp(5), right: wp(5) }}
+                    onPress={hideProfileModal}
+                  >
+                    <AntDesign
+                      name="closecircle"
+                      size={25}
+                      color={colorScheme === "dark" ? "#FFFFFF" : "#444444"}
+                    />
+                  </TouchableOpacity>
+                  <Text
+                    style={[styles(colorScheme).subtitle, { fontSize: 25 }]}
+                  >
+                    ID: {profileData.RegistrationId}
+                  </Text>
+                  <View style={styles(colorScheme).imageContainer}>
+                    <Image
+                      source={
+                        profileData.profilephoto.length == 0
+                          ? require("../../images/profile.png")
+                          : {
+                              uri: profileData.profilephoto,
+                            }
+                      }
+                      style={styles(colorScheme).profileImage}
+                    />
+
+                    <View style={styles(colorScheme).ringContainer}>
+                      <View style={styles(colorScheme).outerRing} />
+                      <View style={styles(colorScheme).middleRing} />
+                      <View style={styles(colorScheme).innering} />
+                    </View>
+                  </View>
+                  <View style={{ alignItems: "center", gap: hp(2) }}>
+                    <Text style={styles(colorScheme).title}>
+                      {profileData.group} - {profileData.KhelaiyaGroupType}
+                    </Text>
+                    <View style={{ alignItems: "center", gap: hp(0.5) }}>
+                      <Text style={styles(colorScheme).nameText}>
+                        {profileData.name}{" "}
+                      </Text>
+                    </View>
+                  </View>
+
                   <Image
-                    source={
-                      success
-                        ? require("../../images/tick-mark.png")
-                        : require("../../images/warning-sign.png")
-                    }
-                    resizeMode="stretch"
-                    style={{ height: 25, width: 25 }}
+                    source={require("../../images/ActoscriptLogo.png")}
+                    resizeMode="contain"
+                    style={styles(colorScheme).logoImage}
                   />
                 </View>
-                <View style={{ width: wp("60%"), overflow: "hidden", gap: 5 }}>
-                  <Text
-                    style={{ fontFamily: "Montserrat-SemiBold", fontSize: 16 }}
-                  >
-                    {success ? success : warning}
-                  </Text>
-                </View>
-              </View>
-            </LinearGradient>
-          </View>
-        )}
-      </View>
-
-      {category == "Scan" && (
-        <View style={{ gap: hp(2) }}>
-          <View style={styles(colorScheme).scannerCamera}>
-            <Camera
-              style={{ flex: 1 }}
-              ref={cameraRef}
-              onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-            />
-          </View>
-          {scanned && (
-            <TouchableOpacity
-              style={styles(colorScheme).submitButton}
-              onPress={() => setScanned(false)}
-            >
-              <Text style={styles(colorScheme).submitText}>Scan Again</Text>
-            </TouchableOpacity>
+              </TouchableWithoutFeedback>
+            </Modal>
           )}
         </View>
-      )}
-
-      {category == "RFCode" && (
-        <View
-          style={{
-            alignItems: "center",
-            justifyContent: "center",
-            gap: wp(2),
-            marginTop: hp(15),
-          }}
-        >
-          <Image
-            source={require("../../images/logo.png")}
-            style={styles(colorScheme).modalLogo}
-          />
-          <TextInput
-            style={[
-              styles(colorScheme).inputContainer,
-              {
-                borderColor: isEmailFocused
-                  ? "#cc9cfc"
-                  : colorScheme === "dark"
-                  ? "#333"
-                  : "#ccc",
-              },
-            ]}
-            placeholder="Enter Code "
-            placeholderTextColor={"#b3b3b3"}
-            onFocus={() => setIsEmailFocused(true)}
-            onBlur={() => setIsEmailFocused(false)}
-            autoCapitalize="none"
-            value={email}
-            onChangeText={(value) => {
-              setEmail(value);
-            }}
-            blurOnSubmit={false}
-            returnKeyType="next"
-          />
-          <TouchableOpacity
-            style={styles(colorScheme).submitButton}
-            onPress={handleScanData}
-            hitSlop={30}
-          >
-            <Text style={styles(colorScheme).submitText}>Send</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {category == "Manually" && (
-        <View
-          style={{
-            alignItems: "center",
-            justifyContent: "center",
-            gap: wp(2),
-            marginTop: hp(15),
-          }}
-        >
-          <Image
-            source={require("../../images/logo.png")}
-            style={styles(colorScheme).modalLogo}
-          />
-          <TextInput
-            style={[
-              styles(colorScheme).inputContainer,
-              {
-                borderColor: isEmailFocused
-                  ? "#cc9cfc"
-                  : colorScheme === "dark"
-                  ? "#333"
-                  : "#ccc",
-              },
-            ]}
-            placeholder="Enter KhelaiyaID "
-            placeholderTextColor={"#b3b3b3"}
-            onFocus={() => setIsEmailFocused(true)}
-            onBlur={() => setIsEmailFocused(false)}
-            autoCapitalize="none"
-            value={email}
-            onChangeText={(value) => {
-              setEmail(value);
-            }}
-            blurOnSubmit={false}
-            returnKeyType="next"
-          />
-          <TouchableOpacity
-            style={styles(colorScheme).submitButton}
-            onPress={handleScanData}
-            hitSlop={30}
-          >
-            <Text style={styles(colorScheme).submitText}>Send</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      {IsshowModal && (
-        <Modal transparent={true}>
-          <Animated.View
+      ) : (
+        <View>
+          <Text
             style={{
-              ...StyleSheet.absoluteFillObject,
-              flex: 1,
-              justifyContent: "flex-end",
-              alignItems: "center",
-              transform: [{ translateY: modalAnimation }],
+              color: colorScheme === "dark" ? "#FFF" : "#000000",
+              fontSize: 20,
+              fontFamily: "Montserrat-SemiBold",
+              textAlign: "center",
+              paddingHorizontal: wp(10),
+              marginTop: hp(40),
             }}
           >
-            <View
-              style={{
-                backgroundColor: colorScheme === "dark" ? "#262626" : "#F2F2F2",
-                padding: 15,
-                width: "95%",
-                height: "75%",
-                borderRadius: 10,
-              }}
-            >
-              <View
-                style={{
-                  height: 60,
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <View style={{ paddingLeft: 20, gap: 10 }}>
-                  <View style={{}}>
-                    <Text
-                      style={{
-                        color: colorScheme === "dark" ? "#CCCCCC" : "#000000",
-                        fontSize: 22,
-                        fontFamily: "Montserrat-Medium",
-                      }}
-                    >
-                      {scannedData.TicketType} - {persons.length} Tickets
-                    </Text>
-                  </View>
-                  <View style={{ width: "90%" }}>
-                    <Text
-                      numberOfLines={1}
-                      style={{
-                        color: colorScheme === "dark" ? "#CCCCCC" : "#000000",
-                        fontFamily: "Montserrat-Medium",
-                        fontSize: 16,
-                      }}
-                    >
-                      {" "}
-                      you'll enjoy {scannedData.TicketType} perks and benefits
-                      that will elevate your event experience to new heights.
-                    </Text>
-                  </View>
-                </View>
-                <View>
-                  <AntDesign
-                    name="closecircle"
-                    size={25}
-                    color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
-                    style={{ alignSelf: "flex-end" }}
-                    onPress={() => hideModal()}
-                  />
-                </View>
-              </View>
-              <ScrollView
-                style={styles(colorScheme).subContainer}
-                showsVerticalScrollIndicator={false}
-              >
-                <View style={styles(colorScheme).sub_Content}>
-                  {persons.map((person, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles(colorScheme).row}
-                      onPress={() => handleCheckboxChange(index)}
-                    >
-                      <Text style={styles(colorScheme).text}>
-                        Person {index + 1}
-                      </Text>
-                      <CustomCheckbox checked={person.checked} />
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-              <TouchableOpacity
-                style={[
-                  styles(colorScheme).ProceedButton,
-                  totalScannerTicketQty < 1 && {
-                    opacity: 0.5,
-                    backgroundColor:
-                      colorScheme === "dark" ? "#333333" : "#333333",
-                  },
-                ]}
-                onPress={() => {
-                  totalScannerTicketQty >= 1 && handleProceedData();
-                }}
-                disabled={totalScannerTicketQty < 1}
-              >
-                <Text style={styles(colorScheme).ProceedText}>Proceed</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </Modal>
-      )}
-
-      {profileModalVisible && (
-        <Modal transparent={true} visible={true} animationType="slide">
-          <StatusBar
-            backgroundColor={colorScheme === "dark" ? "#000000" : "#CCCCCC"}
-          />
-          <TouchableWithoutFeedback onPress={hideProfileModal}>
-            <View style={styles(colorScheme).modalContents}>
-              <TouchableOpacity
-                hitSlop={40}
-                style={{ position: "absolute", top: hp(5), right: wp(5) }}
-                onPress={hideProfileModal}
-              >
-                <AntDesign
-                  name="closecircle"
-                  size={25}
-                  color={colorScheme === "dark" ? "#FFFFFF" : "#444444"}
-                />
-              </TouchableOpacity>
-              <Text style={[styles(colorScheme).subtitle, { fontSize: 25 }]}>
-                ID: {profileData.RegistrationId}
-              </Text>
-              <View style={styles(colorScheme).imageContainer}>
-                <Image
-                  source={
-                    profileData.profilephoto.length == 0
-                      ? require("../../images/profile.png")
-                      : {
-                          uri: profileData.profilephoto,
-                        }
-                  }
-                  style={styles(colorScheme).profileImage}
-                />
-
-                <View style={styles(colorScheme).ringContainer}>
-                  <View style={styles(colorScheme).outerRing} />
-                  <View style={styles(colorScheme).middleRing} />
-                  <View style={styles(colorScheme).innering} />
-                </View>
-              </View>
-              <View style={{ alignItems: "center", gap: hp(2) }}>
-                <Text style={styles(colorScheme).title}>
-                  {profileData.group} - {profileData.KhelaiyaGroupType}
-                </Text>
-                <View style={{ alignItems: "center", gap: hp(0.5) }}>
-                  <Text style={styles(colorScheme).nameText}>
-                    {profileData.name}{" "}
-                  </Text>
-                </View>
-              </View>
-
-              <Image
-                source={require("../../images/ActoscriptLogo.png")}
-                resizeMode="contain"
-                style={styles(colorScheme).logoImage}
-              />
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
+            Connect to the Internet
+          </Text>
+          <Text
+            style={{
+              color: colorScheme === "dark" ? "#CCCCCC" : "grey",
+              fontSize: 14,
+              fontFamily: "Montserrat-Medium",
+              textAlign: "center",
+            }}
+          >
+            you're offline. check your connection.
+          </Text>
+        </View>
       )}
     </SafeAreaView>
   );
