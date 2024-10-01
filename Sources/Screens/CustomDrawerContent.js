@@ -80,7 +80,10 @@ export default function CustomDrawerContent(props) {
   const handleSignOut = async () => {
     try {
       await AsyncStorage.clear();
-      navigation.popToTop();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Register" }],
+      });
     } catch (error) {
       console.error("Error clearing AsyncStorage:", error);
     }

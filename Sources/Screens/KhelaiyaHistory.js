@@ -9,18 +9,21 @@ import {
   TextInput,
   View,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Font from "expo-font";
+import ShimmerLoader from "./Skeleton";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function KhelaiyaHistory() {
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
   const [historyData, setHistoryData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function loadFonts() {
     await Font.loadAsync({
@@ -44,77 +47,57 @@ export default function KhelaiyaHistory() {
     };
   }, []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const userDataJSON = await AsyncStorage.getItem("userData");
-        const userData = JSON.parse(userDataJSON);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        setLoading(true);
+        try {
+          const userDataJSON = await AsyncStorage.getItem("userData");
+          const userData = JSON.parse(userDataJSON);
 
-        const response = await fetch(
-          `${global.DomainName}/api/SacnneTicket/TicketHistory?ScannerLoginId=${userData.ScannerLoginId}`,
-          {
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + userData.AuthorizationKey,
-            },
+          const response = await fetch(
+            `${global.DomainName}/api/SacnneTicket/TicketHistory?ScannerLoginId=${userData.ScannerLoginId}`,
+            {
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + userData.AuthorizationKey,
+              },
+            }
+          );
+          const data = await response.json();
+
+          if (
+            data.length === 0 ||
+            (data.length === 1 && data[0].RegistrationId === 0)
+          ) {
+            setHistoryData([]);
+          } else {
+            setHistoryData(data);
           }
-        );
-        const data = await response.json();
-
-        if (
-          data.length === 0 ||
-          (data.length === 1 && data[0].RegistrationId === 0)
-        ) {
-          setHistoryData([]);
-        } else {
-          setHistoryData(data);
+          setLoading(false);
+          console.log(data);
+        } catch (error) {
+          setLoading(false);
+          console.error("Error fetching history data:", error);
         }
-        console.log(data);
-      } catch (error) {
-        console.error("Error fetching history data:", error);
-      }
-    };
-    fetchData();
-  }, []);
+      };
+      fetchData();
+    }, [])
+  );
 
   const filteredData = historyData.filter((item) =>
     item.RegistrationId.toString().includes(searchQuery)
   );
 
-  return (
-    <View style={styles(colorScheme).container}>
-      <StatusBar
-        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
-        backgroundColor={colorScheme === "dark" ? "#000" : "#fff"}
-      />
-      <View style={styles(colorScheme).inputContainer}>
-        <View style={styles(colorScheme).passwordContent}>
-          <StatusBar />
-          <Image
-            style={{
-              height: hp("2%"),
-              width: hp("2%"),
-              tintColor: colorScheme === "dark" ? "#FFF" : "#000",
-            }}
-            source={require("../../images/search.png")}
-          />
-          <TextInput
-            style={styles(colorScheme).userInput}
-            placeholder="Enter Id "
-            placeholderTextColor={"#5A5A5A"}
-            returnKeyType="done"
-            value={searchQuery}
-            onChangeText={(text) => setSearchQuery(text)}
-          />
-        </View>
-      </View>
+  const renderHistoryItem = () => {
+    return (
       <ScrollView showsVerticalScrollIndicator={false}>
         {filteredData.length === 0 ? (
           <Text style={styles(colorScheme).noDataText}>No data found</Text>
         ) : (
           <FlatList
-            data={filteredData}
+            data={filteredData.reverse()}
             keyExtractor={(item) => item.RegistrationId.toString()}
             renderItem={({ item }) => (
               <View style={styles(colorScheme).historyContainer}>
@@ -168,6 +151,58 @@ export default function KhelaiyaHistory() {
           />
         )}
       </ScrollView>
+    );
+  };
+
+  return (
+    <View style={styles(colorScheme).container}>
+      <StatusBar
+        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+        backgroundColor={colorScheme === "dark" ? "#000" : "#fff"}
+      />
+      <View style={styles(colorScheme).inputContainer}>
+        <View style={styles(colorScheme).passwordContent}>
+          <StatusBar />
+          <Image
+            style={{
+              height: hp("2%"),
+              width: hp("2%"),
+              tintColor: colorScheme === "dark" ? "#FFF" : "#000",
+            }}
+            source={require("../../images/search.png")}
+          />
+          <TextInput
+            style={styles(colorScheme).userInput}
+            placeholder="Enter Id "
+            placeholderTextColor={"#5A5A5A"}
+            returnKeyType="done"
+            value={searchQuery}
+            onChangeText={(text) => setSearchQuery(text)}
+          />
+        </View>
+      </View>
+      {loading ? (
+        <View style={{ alignItems: "center" }}>
+          <ShimmerLoader
+            style={{
+              width: "95%",
+              height: 160,
+              borderRadius: 20,
+              marginBottom: 10,
+            }}
+          />
+          <ShimmerLoader
+            style={{
+              width: "95%",
+              height: 160,
+              borderRadius: 20,
+              marginBottom: 10,
+            }}
+          />
+        </View>
+      ) : (
+        renderHistoryItem()
+      )}
     </View>
   );
 }
@@ -178,7 +213,7 @@ const styles = (colorScheme) =>
       flex: 1,
       backgroundColor: colorScheme === "dark" ? "#000" : "#FFF",
       padding: wp(2),
-      alignItems: "center",
+      // alignItems: "center",
       gap: hp(3),
     },
     inputContainer: {

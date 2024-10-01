@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Animated, StyleSheet, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef } from "react";
+import { View, Animated, StyleSheet, Dimensions } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 const ShimmerLoader = ({ style }) => {
   const shimmerValue = useRef(new Animated.Value(-1)).current;
@@ -17,7 +17,7 @@ const ShimmerLoader = ({ style }) => {
 
   const shimmerTranslate = shimmerValue.interpolate({
     inputRange: [-1, 1],
-    outputRange: [-200, 200]
+    outputRange: [-200, 200],
   });
 
   return (
@@ -31,7 +31,7 @@ const ShimmerLoader = ({ style }) => {
         ]}
       >
         <LinearGradient
-          colors={['#e0e0e0', '#f5f5f5', '#e0e0e0']}
+          colors={["#e0e0e0", "#f5f5f5", "#e0e0e0"]}
           start={[0, 0]}
           end={[1, 0]}
           style={{ flex: 1 }}
@@ -43,8 +43,8 @@ const ShimmerLoader = ({ style }) => {
 
 const styles = StyleSheet.create({
   skeleton: {
-    overflow: 'hidden',
-    backgroundColor: '#e0e0e0',
+    overflow: "hidden",
+    backgroundColor: "#e0e0e0",
   },
 });
 

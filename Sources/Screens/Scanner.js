@@ -15,6 +15,7 @@ import {
   Alert,
   StatusBar,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Camera } from "expo-camera";
@@ -87,7 +88,7 @@ export default function ScannerCopy() {
       setWarningMessage("");
       setSuccess(false);
       setWarning(false);
-    }, 3000);
+    }, 1500);
     return () => clearTimeout(hideMessageTimeout);
   }, [warningMessage, success, warning]);
 
@@ -251,6 +252,7 @@ export default function ScannerCopy() {
   const handleScanData = async () => {
     setSuccess("");
     setWarning("");
+    setLoading(true);
     if (warning == "" && email == "") {
       return;
     }
@@ -311,6 +313,8 @@ export default function ScannerCopy() {
       setEmail("");
     } catch (error) {
       console.error("Error:", error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -318,7 +322,7 @@ export default function ScannerCopy() {
     setProfileModalVisible(true);
     Animated.timing(profileModalAnimation, {
       toValue: 0,
-      duration: 500,
+      duration: 100,
       easing: Easing.out(Easing.ease),
       useNativeDriver: true,
     }).start();
@@ -327,7 +331,7 @@ export default function ScannerCopy() {
   const hideProfileModal = () => {
     Animated.timing(profileModalAnimation, {
       toValue: 0,
-      duration: 500,
+      duration: 100,
       easing: Easing.in(Easing.ease),
       useNativeDriver: true,
     }).start(() => setProfileModalVisible(false));
@@ -788,7 +792,7 @@ const styles = (colorScheme) =>
     },
     messageContainer: {
       position: "absolute",
-      top: hp(2),
+      top: hp(0),
       alignSelf: "center",
     },
     successContainer: {

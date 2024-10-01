@@ -109,7 +109,7 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   if (IsLoading) {
-    <ActivityIndicator  />
+    <ActivityIndicator />;
   }
 
   return (
@@ -269,6 +269,7 @@ const styles = (colorScheme) =>
     },
     text: {
       width: "100%",
+      height: hp(5),
       fontSize: 28,
       fontFamily: "Montserrat-SemiBold",
       color: colorScheme === "dark" ? "#FFF" : "#000",
@@ -318,7 +319,7 @@ const styles = (colorScheme) =>
     },
     submitButton: {
       width: "90%",
-      height: hp("6%"),
+      height: hp("7%"),
       borderRadius: 10,
       backgroundColor: "#942FFA",
       justifyContent: "center",
@@ -328,7 +329,7 @@ const styles = (colorScheme) =>
       width: "100%",
       color: "#FFFFFF",
       textAlign: "center",
-      fontSize: 20,
+      fontSize: 22,
       fontFamily: "Montserrat-SemiBold",
     },
   });
