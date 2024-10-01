@@ -134,7 +134,6 @@ export default function ScannerCopy() {
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     setScanData(data);
-    setLoading(true);
     const storedDataJSON = await AsyncStorage.getItem("userData");
     const storedData = JSON.parse(storedDataJSON);
 
@@ -164,7 +163,7 @@ export default function ScannerCopy() {
         const scannedData = await response.json();
         if (scannedData.ScannerType == "Vendor") {
           setSuccess(
-            scannedData.VendorGroupName + "vendor is scanned successfully."
+            scannedData.VendorGroupName + " Vendor is scanned successfully."
           );
         } else {
           console.log("scannedData: ", scannedData.ResponseMessage);
@@ -181,8 +180,6 @@ export default function ScannerCopy() {
     } catch (error) {
       setScanned(false);
       console.error("Error:", error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -735,13 +732,7 @@ export default function ScannerCopy() {
               </View>
 
               <Image
-                source={
-                  profileData.profilephoto.length == 0
-                    ? require("../../images/ActoscriptLogo.png")
-                    : {
-                        uri: profileData.profilephoto,
-                      }
-                }
+                source={require("../../images/ActoscriptLogo.png")}
                 resizeMode="contain"
                 style={styles(colorScheme).logoImage}
               />
@@ -795,11 +786,6 @@ const styles = (colorScheme) =>
       fontFamily: "Montserrat-SemiBold",
       fontSize: 22,
     },
-    logoImage: {
-      position: "absolute",
-      opacity: 0.2,
-    },
-
     messageContainer: {
       position: "absolute",
       top: hp(2),

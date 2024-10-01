@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   Appearance,
   Image,
   Keyboard,
@@ -25,14 +26,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { SET_USERDATA } from "../../redux/Login/loginSlice";
 
 const RegisterScreen = ({ navigation }) => {
-  const [email, setEmail] = useState("SCL-0002");
-  const [password, setPassword] = useState("7FA8D2FE");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme());
   const [isError, setError] = useState(false);
   const inputRef = useRef(null);
+  const [IsLoading, setLoading] = useState(false);
 
   async function loadFonts() {
     await Font.loadAsync({
@@ -67,6 +69,7 @@ const RegisterScreen = ({ navigation }) => {
   }, []);
 
   const handleLogin = async () => {
+    setLoading(true);
     try {
       const response = await fetch(`${global.DomainName}/api/Scanner`, {
         method: "POST",
@@ -100,8 +103,14 @@ const RegisterScreen = ({ navigation }) => {
       setError("");
     } catch (error) {
       console.error("Error during login:", error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (IsLoading) {
+    <ActivityIndicator  />
+  }
 
   return (
     <SafeAreaView style={styles(colorScheme).container}>
@@ -215,7 +224,7 @@ const RegisterScreen = ({ navigation }) => {
             <View style={styles(colorScheme).submitData}>
               <TouchableOpacity
                 style={styles(colorScheme).submitButton}
-                onPress={handleLogin}
+                onPress={() => handleLogin()}
               >
                 <Text style={styles(colorScheme).submitText}>Login </Text>
               </TouchableOpacity>
