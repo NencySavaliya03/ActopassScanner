@@ -14,6 +14,7 @@ import { Appearance } from "react-native";
 import * as Font from "expo-font";
 import { useSelector } from "react-redux";
 import { LinearGradient } from "expo-linear-gradient"; 
+import { StatusBar } from "react-native";
 
 export default function ProfileScreen() {
   const userData = useSelector((state) => state.loginData.userData);
@@ -39,6 +40,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles(colorScheme).container}>
+      <StatusBar hidden={true} />
       <LinearGradient
         colors={["#8C87F1",  "#942FFA"]}  
         style={styles(colorScheme).gradientContainer}

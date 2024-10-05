@@ -31,15 +31,14 @@ export default function MainStack() {
   const MainStackView = () => {
     return (
       <Stack.Navigator
-        initialRouteName="AuthorizedStack"
         screenOptions={{ headerShown: false }}
       >
+        <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="AuthorizedStack" component={AuthorizedStack} />
         <Stack.Screen name="Scanner" component={Scanner} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="InvitationScreen" component={InvitationScreen} />
         <Stack.Screen name="History" component={HistoryScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="MainStack" component={MainStack} />
       </Stack.Navigator>
     );
@@ -54,12 +53,12 @@ export default function MainStack() {
           borderWidth: 0,
           borderColor: "transparent",
           backgroundColor: colorScheme === "dark" ? "#000" : "#fff",
+          elevation: 0
         },
         headerTintColor: colorScheme === "dark" ? "#fff" : "#000",
         headerTitleStyle: {
           color: "transparent",
         },
-        headerBackgroundColor: "transparent",
         drawerLabelStyle: {
           marginLeft: -15,
           fontSize: 16,

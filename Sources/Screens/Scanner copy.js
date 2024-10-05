@@ -32,7 +32,6 @@ import { Image } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { SET_SCANDATA } from "../../redux/Login/loginSlice";
 import NetInfo from "@react-native-community/netinfo";
-import { useFocusEffect } from "@react-navigation/native";
 
 export default function ScannerCopy() {
   const dispatch = useDispatch();
@@ -87,12 +86,6 @@ export default function ScannerCopy() {
     });
   }
   loadFonts();
-
-  useFocusEffect(
-    React.useCallback(() => {
-      setCategory("RFCode");
-    }, [])
-  );
 
   useEffect(() => {
     const handleChange = (preferences) => {
@@ -156,10 +149,7 @@ export default function ScannerCopy() {
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     setScanData(data);
-    setSuccess("");
-    setWarning("");
-    setLoading(true);    
-    setEmail("");
+    setLoading(true);
     const storedDataJSON = await AsyncStorage.getItem("userData");
     const storedData = JSON.parse(storedDataJSON);
     try {
@@ -171,53 +161,32 @@ export default function ScannerCopy() {
           Authorization: "Bearer " + storedData.AuthorizationKey,
         },
         body: JSON.stringify({
-          QrCode: data == undefined ? email : data.trim(""),
-          ScannerLoginId: storedData.ScannerLoginId,
-          Type: data == undefined ? category == "RFCode" ? "RFID" : "Khelaiyaid" : "RFID",
+          QrCode: data.trim(""),
+          ScannerLoginId: 26,
+          Type: "RFID",
         }),
       });
 
-      const responseBody = await response.json();
-      if (!response.ok) {    
-        if (responseBody.ResponseCode == -1) {
-          setEmail("");
+      const responseBody = await response;
+      console.log("responseBody", responseBody);
+      if (!response.ok) {
+        if (response.status === 404) {
+          const responseBody = await response.json();
           setWarning(responseBody.ResponseMessage);
-        } 
+        }
       } else {
-        if (responseBody.ScannerType != "" ) {
-          if (responseBody.ScannerType == "Vendor") {
-            setEmail("");
-            setProfileData({
-              name: responseBody.VendorGroupName,
-              Vendor: responseBody.ScannerType,
-              profilephoto: responseBody.ProfileImage,
-              RegistrationId: responseBody.Vendorid,
-            });
-            showProfileModal();
-            // setSuccess(
-            //   responseBody.VendorGroupName + " Vendor is scanned successfully."
-            // );
-          } else if (responseBody.ScannerType == "Khelaiya") {
-            setEmail("");
-            setProfileData({
-              name: responseBody.Name,
-              group: responseBody.KhelaiyaGroupName,
-              KhelaiyaGroupType: responseBody.KhelaiyaGroupType,
-              email: responseBody.Email,
-              mobile: responseBody.Mobile,
-              profilephoto: responseBody.ProfileImage,
-              RegistrationId: responseBody.RegistrationId,
-            });
-            setEmail("");
-            showProfileModal();
-          }
+        const scannedData = await response.json();
+        if (scannedData.ScannerType == "Vendor" ) {
+          setSuccess(
+            scannedData.VendorGroupName + " Vendor is scanned successfully."
+          );
         }  
         else {
-          console.log("responseBody: ", responseBody.ResponseMessage);
-          dispatch(SET_SCANDATA(responseBody));
+          console.log("scannedData: ", scannedData.ResponseMessage);
+          dispatch(SET_SCANDATA(scannedData));
           await AsyncStorage.setItem(
             "scannedData",
-            JSON.stringify(responseBody)
+            JSON.stringify(scannedData)
           );
           fetchData();
           setShowModal(true);
@@ -294,6 +263,72 @@ export default function ScannerCopy() {
       return responseBody;
     } catch (error) {
       console.error("Error fetching or parsing data:", error);
+    }
+  };
+
+  const handleScanData = async () => {
+    setSuccess("");
+    setWarning("");
+    if (warning == "" && email == "") {
+      return;
+    }
+    const storedDataJSON = await AsyncStorage.getItem("userData");
+    const storedData = JSON.parse(storedDataJSON);
+    try {
+      const response = await fetch(`${global.DomainName}/api/SacnneTicket`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + storedData.AuthorizationKey,
+        },
+        body: JSON.stringify({
+          QrCode: email,
+          ScannerLoginId: storedData.ScannerLoginId,
+          Type: category == "RFCode" ? "RFID" : "Khelaiyaid",
+        }),
+      });
+
+      if (!response.ok) {
+        const responseBody = await response.json();
+        if (responseBody.ResponseCode == -1) {
+          setEmail("");
+          setWarning(responseBody.ResponseMessage);
+          console.log(warning);
+        } else {
+          setEmail("");
+          setWarning(responseBody.ResponseMessage || "Data not exist");
+        }
+      } else {
+        const scannedData = await response.json();
+        dispatch(SET_SCANDATA(scannedData));
+        await AsyncStorage.setItem("scannedData", JSON.stringify(scannedData));
+        fetchData();
+        if (scannedData.ResponseCode === 0) {
+          setEmail("");
+          if (scannedData.KhelaiyaGroupid != "") {
+            setProfileData({
+              name: scannedData.Name,
+              group: scannedData.KhelaiyaGroupName,
+              KhelaiyaGroupType: scannedData.KhelaiyaGroupType,
+              email: scannedData.Email,
+              mobile: scannedData.Mobile,
+              profilephoto: scannedData.ProfileImage,
+              response: scannedData.ResponseMessage,
+              RegistrationId: scannedData.RegistrationId,
+            });
+            showProfileModal();
+          } else {
+            setEmail("");
+            showModal();
+            setShowModal(true);
+          }
+          // setSuccess(scannedData.ResponseMessage);
+        }
+      }
+      setEmail("");
+    } catch (error) {
+      console.error("Error:", error.message);
     }
   };
 
@@ -400,7 +435,6 @@ export default function ScannerCopy() {
 
   return (
     <SafeAreaView style={styles(colorScheme).container}>
-      <StatusBar hidden={true} />
       {isConnected ? (
         <View style={{ gap: hp(20) }}>
           <View style={styles(colorScheme).categoriesList}>
@@ -529,7 +563,7 @@ export default function ScannerCopy() {
               />
               <TouchableOpacity
                 style={styles(colorScheme).submitButton}
-                onPress={handleBarCodeScanned}
+                onPress={handleScanData}
                 hitSlop={30}
               >
                 <Text style={styles(colorScheme).submitText}>Send</Text>
@@ -575,7 +609,7 @@ export default function ScannerCopy() {
               />
               <TouchableOpacity
                 style={styles(colorScheme).submitButton}
-                onPress={handleBarCodeScanned}
+                onPress={handleScanData}
                 hitSlop={30}
               >
                 <Text style={styles(colorScheme).submitText}>Send</Text>
@@ -732,9 +766,6 @@ export default function ScannerCopy() {
                     </View>
                   </View>
                   <View style={{ alignItems: "center", gap: hp(2) }}>
-                  <Text style={styles(colorScheme).title}>
-                      {profileData.Vendor}
-                    </Text>
                     <Text style={styles(colorScheme).title}>
                       {profileData.group} - {profileData.KhelaiyaGroupType}
                     </Text>
@@ -794,7 +825,6 @@ const styles = (colorScheme) =>
       gap: hp(20),
     },
     categoriesList: {
-      marginTop: hp(3),
       height: hp(5),
       alignItems: "center",
     },

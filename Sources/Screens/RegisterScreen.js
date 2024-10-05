@@ -24,6 +24,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Font from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
 import { SET_USERDATA } from "../../redux/Login/loginSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -35,6 +36,8 @@ const RegisterScreen = ({ navigation }) => {
   const [isError, setError] = useState(false);
   const inputRef = useRef(null);
   const [IsLoading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const userdata = useSelector((state) => state.loginData.userData);
 
   async function loadFonts() {
     await Font.loadAsync({
@@ -90,9 +93,8 @@ const RegisterScreen = ({ navigation }) => {
       }
       const userData = await response.json();
       if (userData.Code === email && userData.Password === password) {
+        dispatch(SET_USERDATA(userData))
         await AsyncStorage.setItem("userData", JSON.stringify(userData));
-        const userdata = await AsyncStorage.getItem("userData");
-        // dispatch(SET_USERDATA(userdata))
         navigation.navigate("MainStack");
       } else {
         setError(true);
@@ -109,7 +111,15 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   if (IsLoading) {
-    <ActivityIndicator />;
+    return (
+      <ActivityIndicator
+        size={50}
+        style={{
+          flex: 1,
+          backgroundColor: colorScheme === "dark" ? "#000" : "#FFF",
+        }}
+      />
+    );
   }
 
   return (
@@ -226,7 +236,11 @@ const RegisterScreen = ({ navigation }) => {
                 style={styles(colorScheme).submitButton}
                 onPress={() => handleLogin()}
               >
-                <Text style={styles(colorScheme).submitText}>Login </Text>
+                <Text style={styles(colorScheme).submitText}>
+                  {" "}
+                  Login
+                  {" "}
+                   </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -319,7 +333,7 @@ const styles = (colorScheme) =>
     },
     submitButton: {
       width: "90%",
-      height: hp("7%"),
+      height: hp(7),
       borderRadius: 10,
       backgroundColor: "#942FFA",
       justifyContent: "center",

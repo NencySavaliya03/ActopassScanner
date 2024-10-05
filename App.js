@@ -5,6 +5,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import AppScreen from "./Sources/Navigation/AppScreen";
 
 export default function App() {
+
   return (
     <Provider store={store}>
       <NavigationContainer>
@@ -13,3 +14,5 @@ export default function App() {
     </Provider>
   );
 }
+
+

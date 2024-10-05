@@ -7,6 +7,7 @@ import {
   Modal,
   Appearance,
   Image,
+  StatusBar,
 } from "react-native";
 import {
   DrawerContentScrollView,
@@ -30,43 +31,45 @@ export default function CustomDrawerContent(props) {
   const userData = useSelector((state) => state.loginData.userData);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  async function loadFonts() {
-    await Font.loadAsync({
-      "Montserrat-SemiBold": require("../../assets/fonts/Montserrat-SemiBold.ttf"),
-      "Montserrat-Bold": require("../../assets/fonts/Montserrat-Bold.ttf"),
-      "Montserrat-Medium": require("../../assets/fonts/Montserrat-Medium.ttf"),
-    });
-  }
-  loadFonts();
-
+  // Load fonts
   useEffect(() => {
-    const handleChange = (preferences) => {
-      setColorScheme(preferences.colorScheme);
+    const loadFonts = async () => {
+      await Font.loadAsync({
+        "Montserrat-SemiBold": require("../../assets/fonts/Montserrat-SemiBold.ttf"),
+        "Montserrat-Bold": require("../../assets/fonts/Montserrat-Bold.ttf"),
+        "Montserrat-Medium": require("../../assets/fonts/Montserrat-Medium.ttf"),
+      });
     };
-    const subscription = Appearance.addChangeListener(handleChange);
-    return () => {
-      subscription.remove();
-    };
+    loadFonts();
   }, []);
 
+  // Fetch user profile data
   useEffect(() => {
     const fetchData = async () => {
       try {
         const userDataJSON = await AsyncStorage.getItem("userData");
-        const userData = JSON.parse(userDataJSON);
+        const parsedUserData = JSON.parse(userDataJSON);
+
+        if (!parsedUserData) {
+          console.warn("No user data found in AsyncStorage");
+          return;
+        }
+
         const response = await fetch(
-          `${global.DomainName}/api/SacnneTicket/Profile/${userData.ScannerLoginId}`,
+          `${global.DomainName}/api/SacnneTicket/Profile/${parsedUserData.ScannerLoginId}`,
           {
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
-              Authorization: "Bearer " + userData.AuthorizationKey,
+              Authorization: "Bearer " + parsedUserData.AuthorizationKey,
             },
           }
         );
+
         if (!response.ok) {
           throw new Error("Failed to fetch profile data");
         }
+        
         const profileData = await response.json();
         dispatch(SET_USERDATA(profileData[0]));
         await AsyncStorage.setItem("profileData", JSON.stringify(profileData));
@@ -74,16 +77,15 @@ export default function CustomDrawerContent(props) {
         console.error("Error fetching profile data:", error);
       }
     };
+
     fetchData();
-  }, []);
+  }, [dispatch]);
 
   const handleSignOut = async () => {
     try {
       await AsyncStorage.clear();
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Register" }],
-      });
+      dispatch(SET_USERDATA(null)); 
+      
     } catch (error) {
       console.error("Error clearing AsyncStorage:", error);
     }
@@ -102,15 +104,6 @@ export default function CustomDrawerContent(props) {
     handleSignOut();
   };
 
-  const dynamicStyles = (colorScheme) => ({
-    profileText: {
-      color: "#FFFFFF",
-      fontSize: 18,
-      fontFamily: "Montserrat-SemiBold",
-      marginTop: 10,
-    },
-  });
-
   return (
     <View
       style={{
@@ -118,6 +111,7 @@ export default function CustomDrawerContent(props) {
         backgroundColor: colorScheme === "dark" ? "#202020" : "#FFFFFF",
       }}
     >
+      <StatusBar hidden={true} />
       <DrawerContentScrollView
         {...props}
         contentContainerStyle={{ backgroundColor: "#7306e0" }}
@@ -130,11 +124,11 @@ export default function CustomDrawerContent(props) {
               containerStyle={{
                 backgroundColor: colorScheme === "dark" ? "#202020" : "#FFFFFF",
               }}
-              source={{ uri: userData.PhotoPath }}
+              source={{ uri: userData?.PhotoPath || 'default-avatar-url' }} // Fallback to a default avatar URL
             />
           </TouchableOpacity>
-          <Text style={dynamicStyles(colorScheme).profileText}>
-            {userData?.Name}{" "}
+          <Text style={{ color: "#FFFFFF", fontSize: 18, fontFamily: "Montserrat-SemiBold", marginTop: 10 }}>
+            {userData ? userData.Name : "Guest"} {/* Display guest name if userData is null */}
           </Text>
         </View>
         <View
@@ -177,7 +171,7 @@ export default function CustomDrawerContent(props) {
                 width: wp(30),
               }}
             >
-              Sign out{" "}
+              Sign out
             </Text>
           </View>
         </TouchableOpacity>
@@ -187,22 +181,22 @@ export default function CustomDrawerContent(props) {
         <Modal transparent={true}>
           <View style={styles(colorScheme).modalContainer}>
             <View style={styles(colorScheme).modalContent}>
-              <Text style={styles(colorScheme).modalTitle}>Log Out? </Text>
+              <Text style={styles(colorScheme).modalTitle}>Log Out?</Text>
               <Text style={styles(colorScheme).modalMessage}>
-                Are you sure you want to log out?{" "}
+                Are you sure you want to log out?
               </Text>
               <View style={styles(colorScheme).buttonContainer}>
                 <TouchableOpacity
                   style={styles(colorScheme).confirmButton}
                   onPress={handleConfirmSignOut}
                 >
-                  <Text style={styles(colorScheme).confirmText}>Log Out </Text>
+                  <Text style={styles(colorScheme).confirmText}>Log Out</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles(colorScheme).cancelButton}
                   onPress={cancelSignOut}
                 >
-                  <Text style={styles(colorScheme).cancelText}>Cancel </Text>
+                  <Text style={styles(colorScheme).cancelText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -215,17 +209,6 @@ export default function CustomDrawerContent(props) {
 
 const styles = (colorScheme) =>
   StyleSheet.create({
-    logoutButton: {
-      backgroundColor: "#7306e0",
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 8,
-    },
-    logoutButtonText: {
-      color: "#fff",
-      fontSize: 16,
-      fontWeight: "600",
-    },
     modalContainer: {
       flex: 1,
       justifyContent: "center",

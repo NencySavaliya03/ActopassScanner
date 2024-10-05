@@ -156,13 +156,9 @@ export default function KhelaiyaHistory() {
 
   return (
     <View style={styles(colorScheme).container}>
-      <StatusBar
-        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
-        backgroundColor={colorScheme === "dark" ? "#000" : "#fff"}
-      />
+      <StatusBar hidden={true} />
       <View style={styles(colorScheme).inputContainer}>
         <View style={styles(colorScheme).passwordContent}>
-          <StatusBar />
           <Image
             style={{
               height: hp("2%"),

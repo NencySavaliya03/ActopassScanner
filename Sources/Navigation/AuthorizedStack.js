@@ -6,9 +6,10 @@ const Stack = createNativeStackNavigator();
 
 export default function AuthorizedStack() {
   return (
-    <Stack.Navigator  initialRouteName="Register"  screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Register" component={RegisterScreen} />
-      <Stack.Screen name="MainStack" component={MainStack} />
+    <Stack.Navigator initialRouteName="Register">
+      <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false}} />
+      <Stack.Screen name="MainStack" component={MainStack} options={{ headerShown: false}} />
     </Stack.Navigator>
+
   );
 }
