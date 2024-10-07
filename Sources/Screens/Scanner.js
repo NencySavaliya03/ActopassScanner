@@ -225,7 +225,7 @@ export default function ScannerCopy() {
         }
       }
     } catch (error) {
-      setWarning("");
+      setWarning("something has gone wrong.");
       setScanned(false);
       console.error("Error:", error.message);
     } finally {
