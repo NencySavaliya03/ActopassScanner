@@ -53,7 +53,7 @@ export default function ScannerCopy() {
   const [profileData, setProfileData] = useState({});
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [email, setEmail] = useState("");
-  const [category, setCategory] = useState("RFCode");
+  const [category, setCategory] = useState("Scan");
   const profileModalAnimation = useRef(new Animated.Value(hp("100%"))).current;
   const [IsLoading, setLoading] = useState(false);
   const cameraRef = useRef(null);
@@ -90,7 +90,7 @@ export default function ScannerCopy() {
 
   useFocusEffect(
     React.useCallback(() => {
-      setCategory("RFCode");
+      setCategory("Scan");
     }, [])
   );
 
@@ -109,7 +109,7 @@ export default function ScannerCopy() {
       setWarningMessage("");
       setSuccess(false);
       setWarning(false);
-    }, 1500);
+    }, 2500);
     return () => clearTimeout(hideMessageTimeout);
   }, [warningMessage, success, warning]);
 
@@ -162,6 +162,13 @@ export default function ScannerCopy() {
     setEmail("");
     const storedDataJSON = await AsyncStorage.getItem("userData");
     const storedData = JSON.parse(storedDataJSON);
+    console.log(JSON.stringify({
+      QrCode: data || data == undefined ? email : data.trim(""),
+      ScannerLoginId: storedData.ScannerLoginId,
+      Type: "QRCode",
+      // Type: "QRCode" ||  data == undefined ? category == "RFCode" ? "RFID" : "Khelaiyaid" : "RFID",
+    }));
+    
     try {
       const response = await fetch(`${global.DomainName}/api/SacnneTicket`, {
         method: "POST",
@@ -170,20 +177,31 @@ export default function ScannerCopy() {
           "Content-Type": "application/json",
           Authorization: "Bearer " + storedData.AuthorizationKey,
         },
-        body: JSON.stringify({
-          QrCode: data == undefined ? email : data.trim(""),
+         body: JSON.stringify({
+          QrCode: data,
           ScannerLoginId: storedData.ScannerLoginId,
-          Type: data == undefined ? category == "RFCode" ? "RFID" : "Khelaiyaid" : "RFID",
+          Type: "QRCode",
+          // Type: "QRCode" ||  data == undefined ? category == "RFCode" ? "RFID" : "Khelaiyaid" : "RFID",
         }),
+        // body: JSON.stringify({
+        //   QrCode: data || data == undefined ? email : data.trim(""),
+        //   ScannerLoginId: storedData.ScannerLoginId,
+        //   Type: "QRCode",
+        //   // Type: "QRCode" ||  data == undefined ? category == "RFCode" ? "RFID" : "Khelaiyaid" : "RFID",
+        // }),
       });
 
       const responseBody = await response.json();
       if (!response.ok) {    
+        console.log(responseBody);
+        
         if (responseBody.ResponseCode == -1) {
           setEmail("");
           setWarning(responseBody.ResponseMessage);
         } 
       } else {
+        console.log('djhsjkhdjkshdasdjhk',responseBody);
+        
         if (responseBody.ScannerType != "" ) {
           if (responseBody.ScannerType == "Vendor") {
             setEmail("");
@@ -210,7 +228,18 @@ export default function ScannerCopy() {
             });
             setEmail("");
             showProfileModal();
+          }else if (responseBody.ScannerType == "QRCode") {
+          
+            dispatch(SET_SCANDATA(responseBody));
+            await AsyncStorage.setItem(
+              "scannedData",
+              JSON.stringify(responseBody)
+            );
+            fetchData();
+            setShowModal(true);
+            showModal();
           }
+          
         }  
         else {
           console.log("responseBody: ", responseBody.ResponseMessage);
@@ -227,6 +256,7 @@ export default function ScannerCopy() {
     } catch (error) {
       setWarning("something has gone wrong.");
       setScanned(false);
+      setShowModal(true);
       console.error("Error:", error.message);
     } finally {
       setLoading(false);
@@ -247,6 +277,8 @@ export default function ScannerCopy() {
         const updatedPersons = initialPersons.map((person, index) => {
           return { ...person, checked: index < scannedTicket };
         });
+        // console.log(updatedPersons);
+        
         setPersons(updatedPersons);
       } else {
         console.log("No scanned data found");
@@ -320,22 +352,27 @@ export default function ScannerCopy() {
   const handleCheckboxChange = (clickedIndex) => {
     setPersons((prevPersons) => {
       const updatedPersons = prevPersons.map((person, index) => {
-        if (index <= clickedIndex) {
-          if (index < scannedTicket) {
-            return { ...person, checked: true };
-          } else {
-            return { ...person, checked: !person.checked };
-          }
-        } else {
-          return person;
-        }
+        return { ...person, checked: index <= clickedIndex ? true : false };
+        // if (index <= clickedIndex) {
+        //   if (index < scannedTicket) {
+        //     return { ...person, checked: true };
+        //   } else {
+        //     return { ...person, checked: !person.checked };
+        //   }
+        // } else {
+        //   return person;
+        // }
       });
+      console.log(updatedPersons);
       const newTotalScannerTicketQty = updatedPersons.filter(
         (person, index) => person.checked && index >= scannedTicket
       ).length;
       setTotalScannerTicketQty(newTotalScannerTicketQty);
       return updatedPersons;
     });
+
+
+    
   };
 
   const showModal = () => {
@@ -624,7 +661,7 @@ export default function ScannerCopy() {
                           {scannedData.TicketType} - {persons.length} Tickets
                         </Text>
                       </View>
-                      <View style={{ width: "90%" }}>
+                      {/* <View style={{ width: "90%" }}>
                         <Text
                           numberOfLines={1}
                           style={{
@@ -639,7 +676,7 @@ export default function ScannerCopy() {
                           benefits that will elevate your event experience to
                           new heights.
                         </Text>
-                      </View>
+                      </View> */}
                     </View>
                     <View>
                       <AntDesign
